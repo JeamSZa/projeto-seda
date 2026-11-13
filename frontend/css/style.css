@@ -1,0 +1,538 @@
+
+/* =====================================
+   ESTILOS DA TELA DE LOGIN
+===================================== */
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+:root {
+    --navy: #082F43;
+    --navy-dark: #052536;
+    --navy-light: #174A61;
+
+    --gold: #D8BA3F;
+    --gold-light: #E8D477;
+
+    --white: #FFFFFF;
+    --gray: #788994;
+}
+
+body {
+    font-family: "DM Sans", sans-serif;
+    background: #F2F5F6;
+    min-height: 100vh;
+}
+
+
+/* =====================================
+   ESTRUTURA PRINCIPAL
+===================================== */
+
+.login-container {
+    width: 100%;
+    min-height: 100vh;
+
+    display: grid;
+    grid-template-columns: 1.1fr 0.9fr;
+
+    background: white;
+}
+
+
+/* =====================================
+   LADO ESQUERDO
+===================================== */
+
+.brand-section {
+    position: relative;
+    overflow: hidden;
+
+    display: flex;
+    align-items: center;
+
+    padding: 55px 9%;
+
+    color: white;
+
+    background:
+        linear-gradient(
+            110deg,
+            rgba(5, 37, 54, 0.98),
+            rgba(8, 47, 67, 0.88) 58%,
+            rgba(8, 47, 67, 0.3)
+        ),
+        url("https://images.unsplash.com/photo-1521737711867-e3b97375f902?auto=format&fit=crop&w=1400&q=85");
+
+    background-position: center;
+    background-size: cover;
+}
+
+
+/* Detalhe dourado */
+
+.brand-section::before {
+    content: "";
+
+    position: absolute;
+
+    width: 420px;
+    height: 650px;
+
+    right: -280px;
+    top: -70px;
+
+    border: 20px solid var(--gold);
+
+    border-radius: 50%;
+
+    opacity: 0.9;
+}
+
+
+/* CONTEÚDO */
+
+.brand-content {
+    position: relative;
+    z-index: 2;
+
+    width: 100%;
+    max-width: 520px;
+}
+
+
+/* LOGO */
+
+.brand-logo {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+
+    margin-bottom: 100px;
+}
+
+.logo-icon {
+    font-size: 42px;
+    color: var(--gold);
+}
+
+.brand-logo h2 {
+    font-size: 27px;
+    font-weight: 800;
+    letter-spacing: 2px;
+    margin: 0;
+}
+
+.brand-logo p {
+    font-size: 10px;
+    line-height: 1.4;
+    color: #D5E0E5;
+    margin: 3px 0 0;
+}
+
+
+/* TEXTO PRINCIPAL */
+
+.brand-message {
+    max-width: 450px;
+}
+
+.gold-line {
+    display: block;
+
+    width: 45px;
+    height: 4px;
+
+    background: var(--gold);
+
+    margin-bottom: 24px;
+}
+
+.brand-message h1 {
+    font-size: clamp(24px, 3vw, 37px);
+    font-weight: 700;
+    line-height: 1.28;
+}
+
+.brand-message h1 span {
+    color: var(--gold);
+}
+
+.brand-message p {
+    color: #CFDDE2;
+    font-size: 13px;
+    margin-top: 18px;
+    line-height: 1.7;
+}
+
+
+/* EMPRESAS */
+
+.brand-companies {
+    display: flex;
+    align-items: center;
+    gap: 22px;
+
+    margin-top: 90px;
+}
+
+.company-name {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.company-name i {
+    font-size: 23px;
+    color: var(--gold);
+}
+
+.company-name strong,
+.company-name small {
+    display: block;
+}
+
+.company-name strong {
+    font-size: 11px;
+    letter-spacing: 0.5px;
+}
+
+.company-name small {
+    font-size: 9px;
+    color: #B7C8D0;
+    text-transform: uppercase;
+}
+
+.company-divider {
+    width: 1px;
+    height: 32px;
+    background: rgba(255,255,255,.4);
+}
+
+
+/* =====================================
+   LADO DIREITO
+===================================== */
+
+.form-section {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    padding: 40px 25px;
+
+    background: #FFFFFF;
+}
+
+.login-card {
+    width: 100%;
+    max-width: 380px;
+}
+
+
+/* CABEÇALHO DO LOGIN */
+
+.login-heading {
+    text-align: center;
+    margin-bottom: 35px;
+}
+
+.welcome-icon {
+    width: 55px;
+    height: 55px;
+
+    margin: 0 auto 17px;
+
+    display: grid;
+    place-items: center;
+
+    border-radius: 15px;
+
+    background: #FBF7E8;
+    color: #A98D24;
+
+    font-size: 25px;
+}
+
+.login-heading h2 {
+    color: var(--navy);
+    font-size: 21px;
+    font-weight: 800;
+}
+
+.login-heading p {
+    color: var(--gray);
+    font-size: 12px;
+}
+
+
+/* =====================================
+   CAMPOS DO FORMULÁRIO
+===================================== */
+
+.form-group {
+    margin-bottom: 19px;
+}
+
+.form-group label {
+    display: block;
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--navy);
+    margin-bottom: 8px;
+}
+
+.input-container {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.input-container > i {
+    position: absolute;
+    left: 13px;
+
+    color: #8A9AA4;
+    font-size: 15px;
+}
+
+.input-container input {
+    width: 100%;
+    height: 45px;
+
+    padding: 0 42px;
+
+    border: 1px solid #E0E7EA;
+    border-radius: 8px;
+
+    outline: none;
+
+    font-size: 12px;
+    color: var(--navy);
+
+    transition: 0.2s;
+}
+
+.input-container input:focus {
+    border-color: var(--gold);
+    box-shadow: 0 0 0 3px rgba(216,186,63,.12);
+}
+
+.input-container input::placeholder {
+    color: #A8B3B9;
+    font-size: 11px;
+}
+
+
+/* MOSTRAR SENHA */
+
+.password-toggle {
+    position: absolute;
+    right: 12px;
+
+    border: none;
+    background: transparent;
+
+    color: #87969E;
+    font-size: 15px;
+}
+
+
+/* =====================================
+   OPÇÕES DE LOGIN
+===================================== */
+
+.login-options {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+
+    margin: 20px 0 23px;
+
+    font-size: 10px;
+}
+
+.remember-label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+
+    color: #71818A;
+}
+
+.remember-label input {
+    accent-color: var(--gold);
+}
+
+.login-options a {
+    color: #9A8125;
+    font-weight: 600;
+}
+
+
+/* =====================================
+   BOTÕES
+===================================== */
+
+.btn-login {
+    width: 100%;
+    height: 45px;
+
+    border: none;
+    border-radius: 8px;
+
+    background: var(--gold);
+    color: var(--navy-dark);
+
+    font-size: 13px;
+    font-weight: 800;
+
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+
+    cursor: pointer;
+
+    transition: 0.2s;
+}
+
+.btn-login:hover {
+    background: var(--gold-light);
+    transform: translateY(-1px);
+}
+
+.divider {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+
+    margin: 22px 0;
+
+    color: #9BA8AE;
+    font-size: 10px;
+}
+
+.divider::before,
+.divider::after {
+    content: "";
+    height: 1px;
+    background: #E8EDEF;
+    flex: 1;
+}
+
+.btn-guest {
+    width: 100%;
+    height: 43px;
+
+    background: white;
+
+    border: 1px solid #E0E7EA;
+    border-radius: 8px;
+
+    color: var(--navy);
+
+    font-size: 11px;
+    font-weight: 600;
+
+    cursor: pointer;
+
+    transition: 0.2s;
+}
+
+.btn-guest:hover {
+    background: #F6F8F9;
+}
+
+
+/* MENSAGEM */
+
+.login-message {
+    min-height: 20px;
+    margin-top: 12px;
+
+    text-align: center;
+    font-size: 11px;
+    color: #B17B24;
+}
+
+
+/* RODAPÉ */
+
+.login-footer {
+    margin-top: 35px;
+    padding-top: 20px;
+
+    border-top: 1px solid #EEF1F2;
+
+    text-align: center;
+}
+
+.login-footer p {
+    color: #71818A;
+    font-size: 10px;
+    margin-bottom: 5px;
+}
+
+.login-footer span {
+    color: #A3ADB2;
+    font-size: 9px;
+}
+
+
+/* LOGO MOBILE */
+
+.mobile-logo {
+    display: none;
+}
+
+
+/* =====================================
+   RESPONSIVIDADE
+===================================== */
+
+@media (max-width: 900px) {
+
+    .login-container {
+        grid-template-columns: 1fr;
+    }
+
+    .brand-section {
+        display: none;
+    }
+
+    .form-section {
+        min-height: 100vh;
+        padding: 30px 22px;
+    }
+
+    .mobile-logo {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 10px;
+
+        color: var(--navy);
+        font-size: 25px;
+        margin-bottom: 35px;
+    }
+
+    .mobile-logo i {
+        color: var(--gold-dark);
+    }
+}
+
+@media (max-width: 400px) {
+
+    .login-card {
+        max-width: 100%;
+    }
+
+    .login-heading h2 {
+        font-size: 18px;
+    }
+
+}
