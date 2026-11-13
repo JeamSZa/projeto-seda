@@ -1,0 +1,26 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.env
+.env.*
+!.env.example
+
+# Banco de dados e arquivos enviados
+backend/app.db
+backend/app.db-*
+backend/uploads/*
+!backend/uploads/.gitkeep
+
+# Logs e cobertura
+*.log
+.coverage
+htmlcov/
+
+# Windows
+Thumbs.db
+Desktop.ini
+
+# macOS
+.DS_Store
