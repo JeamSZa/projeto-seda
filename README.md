@@ -1,6 +1,6 @@
 # S.E.D.A.
 
-**Sistema de Extração e Dados Automatizados** é uma aplicação web para receber
+**S.E.D.A.** é uma aplicação web para receber
 documentos financeiros, extrair informações iniciais, permitir a conferência
 manual dos dados e acompanhar o estado de processamento dos documentos.
 
