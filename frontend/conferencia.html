@@ -1,0 +1,716 @@
+
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>S.E.D.A. | Conferência Inteligente</title>
+
+    <!-- Bootstrap -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- Bootstrap Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+
+    <!-- Fonte -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <!-- CSS compartilhado -->
+    <link rel="stylesheet" href="./css/dashboard.css">
+
+    <!-- CSS da página -->
+    <link rel="stylesheet" href="css/conferencia.css">
+</head>
+
+<body>
+
+<div class="app-container">
+
+    <!-- MENU LATERAL -->
+    <aside class="sidebar" id="sidebar">
+
+        <div class="sidebar-brand">
+            <div class="brand-icon">
+                <i class="bi bi-buildings-fill"></i>
+            </div>
+
+            <div>
+                <h2>S.E.D.A.</h2>
+                <p>Gestão documental<br>inteligente</p>
+            </div>
+        </div>
+
+        <div class="sidebar-section">
+            MENU PRINCIPAL
+        </div>
+
+        <nav class="sidebar-nav">
+
+            <a href="dashboard.html" class="nav-item">
+                <i class="bi bi-grid-1x2-fill"></i>
+                <span>Dashboard</span>
+            </a>
+
+            <a href="documentos.html" class="nav-item">
+                <i class="bi bi-folder2"></i>
+                <span>Documentos</span>
+            </a>
+
+            <a href="conferencia.html" class="nav-item active">
+                <i class="bi bi-clipboard-check"></i>
+                <span>Conferência</span>
+                <span class="nav-count" id="sidebarPending">3</span>
+            </a>
+
+            <a href="historico.html" class="nav-item">
+                <i class="bi bi-clock-history"></i>
+                <span>Histórico</span>
+            </a>
+
+            <a href="relatorios.html" class="nav-item">
+                <i class="bi bi-file-earmark-bar-graph"></i>
+                <span>Relatórios</span>
+            </a>
+
+        </nav>
+
+        <div class="sidebar-section settings-title">
+            CONFIGURAÇÕES
+        </div>
+
+        <nav class="sidebar-nav">
+            <a href="configuracoes.html" class="nav-item">
+                <i class="bi bi-gear"></i>
+                <span>Configurações</span>
+            </a>
+        </nav>
+
+        <div class="sidebar-bottom">
+
+            <div class="company-brand">
+                <i class="bi bi-shield-check"></i>
+                <div>
+                    <strong>OTPRO CAPITAL</strong>
+                    <small>SOFIPE CORRETORA</small>
+                </div>
+            </div>
+
+            <div class="user-profile">
+                <div class="user-avatar">JS</div>
+
+                <div>
+                    <strong>João Silva</strong>
+                    <small>Administrador</small>
+                </div>
+
+                <button type="button" class="logout-button" id="logoutButton" title="Sair do sistema" aria-label="Sair do sistema">
+                    Sair
+                </button>
+            </div>
+
+        </div>
+
+    </aside>
+
+
+    <!-- ÁREA PRINCIPAL -->
+    <main class="main-content">
+
+        <!-- CABEÇALHO -->
+        <header class="topbar">
+
+            <button class="menu-toggle" id="menuToggle">
+                <i class="bi bi-list"></i>
+            </button>
+
+            <div class="breadcrumb-area">
+                <span>Principal</span>
+                <i class="bi bi-chevron-right"></i>
+                <strong>Conferência</strong>
+            </div>
+
+            <div class="topbar-right">
+
+                <div class="current-date">
+                    <i class="bi bi-calendar3"></i>
+                    <span id="currentDate"></span>
+                </div>
+
+                <button class="notification-button" id="notificationButton">
+                    <i class="bi bi-bell"></i>
+                    <span class="notification-dot"></span>
+                </button>
+
+                <div class="top-user">
+                    <div class="user-avatar">JS</div>
+                    <strong>Olá, João!</strong>
+                </div>
+
+            </div>
+
+        </header>
+
+
+        <!-- CONTEÚDO -->
+        <section class="page-content">
+
+            <div class="page-heading">
+
+                <div>
+                    <span class="section-label">
+                        <span class="label-dot"></span>
+                        ANÁLISE DOCUMENTAL
+                    </span>
+
+                    <h1>Conferência de Informações</h1>
+
+                    <p>
+                        Revise os dados identificados nos documentos antes de aprovar.
+                    </p>
+                </div>
+
+                <div class="pending-indicator">
+                    <i class="bi bi-hourglass-split"></i>
+                    <strong id="pendingCount">3 documentos pendentes</strong>
+                </div>
+
+            </div>
+
+
+            <!-- SELEÇÃO DO DOCUMENTO -->
+            <section class="selection-card">
+
+                <div class="selection-field">
+
+                    <label for="documentSelect">Documento em análise</label>
+
+                    <select id="documentSelect" class="form-select">
+
+                        <option value="1">Extrato_Financeiro_2026.pdf</option>
+
+                        <option value="2">Comprovante_Cliente.pdf</option>
+
+                        <option value="3">Contrato_Financeiro.pdf</option>
+
+                    </select>
+
+                </div>
+
+                <div class="document-status" id="documentStatus">
+                    <span class="status-dot"></span>
+                    Aguardando revisão
+                </div>
+
+            </section>
+
+
+            <!-- ÁREA DE CONFERÊNCIA -->
+            <div class="conference-grid">
+
+
+                <!-- DOCUMENTO ORIGINAL -->
+                <section class="panel-card document-panel">
+
+                    <div class="panel-header">
+
+                        <div class="panel-title">
+
+                            <i class="bi bi-file-earmark-pdf"></i>
+
+                            <div>
+                                <h2>Documento original</h2>
+                                <p>Visualização do arquivo enviado</p>
+                            </div>
+
+                        </div>
+
+                        <label for="originalFile" class="btn-outline-custom">
+                            <i class="bi bi-upload"></i>
+                            Abrir arquivo
+                        </label>
+
+                        <input
+                            type="file"
+                            id="originalFile"
+                            accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png"
+                            hidden
+                        >
+
+                    </div>
+
+
+                    <!-- INFORMAÇÕES DO ARQUIVO -->
+                    <div class="file-information">
+
+                        <div class="file-name-area">
+                            <i class="bi bi-file-earmark-text"></i>
+
+                            <div>
+                                <strong id="originalFileName">Extrato_Financeiro_2026.pdf</strong>
+                                <small id="fileMetadata">PDF • Arquivo demonstrativo</small>
+                            </div>
+                        </div>
+
+                        <a href="#" id="downloadFile" class="download-file" hidden download>
+                            <i class="bi bi-download"></i>
+                            Baixar
+                        </a>
+
+                    </div>
+
+
+                    <!-- CONTROLES DE VISUALIZAÇÃO -->
+                    <div class="viewer-toolbar">
+
+                        <div class="viewer-label">
+                            <i class="bi bi-eye"></i>
+                            Visualizador
+                        </div>
+
+                        <div class="zoom-controls">
+
+                            <button type="button" id="zoomOut" title="Diminuir zoom">
+                                <i class="bi bi-dash-lg"></i>
+                            </button>
+
+                            <span id="zoomValue">100%</span>
+
+                            <button type="button" id="zoomIn" title="Aumentar zoom">
+                                <i class="bi bi-plus-lg"></i>
+                            </button>
+
+                            <button type="button" id="zoomReset" title="Restaurar zoom">
+                                <i class="bi bi-arrows-angle-expand"></i>
+                            </button>
+
+                        </div>
+
+                    </div>
+
+
+                    <!-- VISUALIZAÇÃO -->
+                    <div class="document-viewer" id="documentViewer">
+
+                        <div class="preview-placeholder" id="documentPlaceholder">
+
+                            <i class="bi bi-file-earmark-pdf pdf-placeholder-icon"></i>
+
+                            <h3>Extrato Financeiro</h3>
+
+                            <p>Documento demonstrativo do S.E.D.A.</p>
+
+                            <div class="sample-document" id="sampleDocument">
+
+                                <div class="sample-bank">
+                                    <strong>BANCO DO BRASIL</strong>
+                                    <span>EXTRATO FINANCEIRO</span>
+                                </div>
+
+                                <hr>
+
+                                <div class="sample-info">
+                                    <p><strong>Cliente:</strong> João da Silva</p>
+                                    <p><strong>CPF:</strong> 123.456.789-00</p>
+                                    <p><strong>Período:</strong> Outubro de 2026</p>
+                                </div>
+
+                                <div class="sample-table">
+                                    <div><strong>Descrição</strong><strong>Valor</strong></div>
+                                    <div><span>Saldo anterior</span><span>R$ 8.500,00</span></div>
+                                    <div><span>Créditos</span><span>R$ 6.080,50</span></div>
+                                    <div><span>Débitos</span><span>R$ 2.000,00</span></div>
+                                </div>
+
+                                <div class="sample-total">
+                                    <span>Saldo final</span>
+                                    <strong>R$ 12.580,50</strong>
+                                </div>
+
+                            </div>
+
+                        </div>
+
+                        <div class="preview-transform" id="previewTransform">
+
+                            <iframe id="pdfPreview" title="Visualização do PDF" hidden></iframe>
+
+                            <img id="imagePreview" alt="Imagem do documento" hidden>
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="viewer-footer">
+                        <i class="bi bi-info-circle"></i>
+                        Os arquivos são exibidos localmente nesta demonstração.
+                    </div>
+
+                </section>
+
+
+
+                <!-- DADOS EXTRAÍDOS -->
+                <section class="panel-card data-panel">
+
+                    <div class="panel-header data-header">
+
+                        <div class="panel-title">
+
+                            <i class="bi bi-cpu"></i>
+
+                            <div>
+                                <h2>Informações extraídas</h2>
+                                <p>Confira e corrija os dados identificados</p>
+                            </div>
+
+                        </div>
+
+                        <span class="ai-badge">
+                            <i class="bi bi-stars"></i>
+                            IA DEMONSTRATIVA
+                        </span>
+
+                    </div>
+
+
+                    <div class="extraction-summary">
+
+                        <div>
+                            <i class="bi bi-check-circle-fill"></i>
+                            <span>Campos identificados</span>
+                        </div>
+
+                        <strong id="fieldCount">6 campos</strong>
+
+                    </div>
+
+
+                    <form id="conferenceForm">
+
+                        <!-- CLIENTE -->
+                        <div class="extracted-field">
+
+                            <div class="field-heading">
+
+                                <label for="clientName">Nome do cliente</label>
+
+                                <span class="confidence high">
+                                    98% confiança
+                                </span>
+
+                            </div>
+
+                            <div class="input-icon">
+                                <i class="bi bi-person"></i>
+
+                                <input
+                                    type="text"
+                                    id="clientName"
+                                    class="form-control"
+                                    required
+                                    placeholder="Nome do cliente"
+                                >
+                            </div>
+
+                        </div>
+
+
+                        <!-- CPF -->
+                        <div class="extracted-field">
+
+                            <div class="field-heading">
+
+                                <label for="documentNumber">CPF / CNPJ</label>
+
+                                <span class="confidence high">
+                                    99% confiança
+                                </span>
+
+                            </div>
+
+                            <div class="input-icon">
+                                <i class="bi bi-card-text"></i>
+
+                                <input
+                                    type="text"
+                                    id="documentNumber"
+                                    class="form-control"
+                                    required
+                                    placeholder="Documento do cliente"
+                                >
+                            </div>
+
+                        </div>
+
+
+                        <!-- PERÍODO -->
+                        <div class="extracted-field">
+
+                            <div class="field-heading">
+
+                                <label for="referencePeriod">Período de referência</label>
+
+                                <span class="confidence high">
+                                    95% confiança
+                                </span>
+
+                            </div>
+
+                            <div class="input-icon">
+                                <i class="bi bi-calendar-range"></i>
+
+                                <input
+                                    type="text"
+                                    id="referencePeriod"
+                                    class="form-control"
+                                    required
+                                    placeholder="Período"
+                                >
+                            </div>
+
+                        </div>
+
+
+                        <!-- VALOR -->
+                        <div class="extracted-field">
+
+                            <div class="field-heading">
+
+                                <label for="documentValue">Valor financeiro (R$)</label>
+
+                                <span class="confidence medium">
+                                    72% confiança
+                                </span>
+
+                            </div>
+
+                            <div class="input-icon">
+                                <i class="bi bi-currency-dollar"></i>
+
+                                <input
+                                    type="number"
+                                    id="documentValue"
+                                    class="form-control"
+                                    min="0"
+                                    step="0.01"
+                                    required
+                                    placeholder="0,00"
+                                >
+                            </div>
+
+                            <small class="field-warning">
+                                <i class="bi bi-exclamation-circle"></i>
+                                Recomenda-se verificar este valor.
+                            </small>
+
+                        </div>
+
+
+                        <!-- BANCO -->
+                        <div class="extracted-field">
+
+                            <div class="field-heading">
+
+                                <label for="bankName">Instituição financeira</label>
+
+                                <span class="confidence high">
+                                    97% confiança
+                                </span>
+
+                            </div>
+
+                            <div class="input-icon">
+                                <i class="bi bi-bank"></i>
+
+                                <input
+                                    type="text"
+                                    id="bankName"
+                                    class="form-control"
+                                    required
+                                    placeholder="Nome do banco"
+                                >
+                            </div>
+
+                        </div>
+
+
+                        <!-- OBSERVAÇÕES -->
+                        <div class="extracted-field">
+
+                            <div class="field-heading">
+                                <label for="observations">Observações da conferência</label>
+                            </div>
+
+                            <textarea
+                                id="observations"
+                                class="form-control"
+                                rows="3"
+                                placeholder="Adicione observações sobre o documento..."
+                            ></textarea>
+
+                        </div>
+
+
+                        <!-- AÇÕES -->
+                        <div class="action-buttons">
+
+                            <button
+                                type="button"
+                                id="rejectButton"
+                                class="btn-reject"
+                            >
+                                <i class="bi bi-x-circle"></i>
+                                Rejeitar
+                            </button>
+
+                            <button
+                                type="submit"
+                                id="approveButton"
+                                class="btn-approve"
+                            >
+                                <i class="bi bi-check-circle"></i>
+                                Aprovar documento
+                            </button>
+
+                        </div>
+
+                    </form>
+
+                </section>
+
+            </div>
+
+        </section>
+
+
+        <!-- RODAPÉ -->
+        <footer class="page-footer">
+            S.E.D.A. | Otpro Capital - Sofipe Corretora
+            <span>Gestão documental inteligente</span>
+        </footer>
+
+    </main>
+
+</div>
+
+
+
+<!-- MODAL DE REJEIÇÃO -->
+<div class="modal fade" id="rejectModal" tabindex="-1" aria-hidden="true">
+
+    <div class="modal-dialog modal-dialog-centered">
+
+        <div class="modal-content custom-modal">
+
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="bi bi-exclamation-circle"></i>
+                    Rejeitar documento
+                </h5>
+
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+
+            <div class="modal-body">
+
+                <p>Informe o motivo da rejeição deste documento.</p>
+
+                <label for="rejectionReason" class="form-label">
+                    Justificativa
+                </label>
+
+                <textarea
+                    id="rejectionReason"
+                    class="form-control"
+                    rows="4"
+                    placeholder="Descreva o motivo da rejeição..."
+                    required
+                ></textarea>
+
+                <small class="text-danger" id="rejectionError" hidden>
+                    Informe uma justificativa antes de continuar.
+                </small>
+
+            </div>
+
+            <div class="modal-footer">
+
+                <button type="button" class="btn-cancel" data-bs-dismiss="modal">
+                    Cancelar
+                </button>
+
+                <button type="button" class="btn-reject" id="confirmReject">
+                    Confirmar rejeição
+                </button>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+
+<!-- MODAL DE RESULTADO -->
+<div class="modal fade" id="resultModal" tabindex="-1" aria-hidden="true">
+
+    <div class="modal-dialog modal-dialog-centered">
+
+        <div class="modal-content result-modal">
+
+            <div class="modal-body text-center">
+
+                <div class="result-icon" id="resultIcon">
+                    <i class="bi bi-check-circle-fill"></i>
+                </div>
+
+                <h3 id="resultTitle">Documento aprovado!</h3>
+
+                <p id="resultMessage"></p>
+
+                <button
+                    type="button"
+                    class="btn-approve result-close"
+                    data-bs-dismiss="modal"
+                >
+                    Entendi
+                </button>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+
+<!-- TOAST -->
+<div class="toast-container position-fixed bottom-0 end-0 p-3">
+
+    <div class="toast app-toast" id="appToast" role="status">
+
+        <div class="toast-body">
+            <i class="bi bi-check-circle-fill"></i>
+            <span id="toastMessage">Operação realizada.</span>
+        </div>
+
+    </div>
+
+</div>
+
+
+<!-- BOOTSTRAP JS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+<!-- JAVASCRIPT -->
+<script src="js/conferencia.js"></script>
+<script src="./js/session.js"></script>
+</body></html>

@@ -1,0 +1,290 @@
+
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>S.E.D.A. | Relatórios</title>
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <link rel="stylesheet" href="./css/dashboard.css">
+    <link rel="stylesheet" href="css/relatorios.css">
+</head>
+<body>
+
+<div class="app-container">
+
+    <aside class="sidebar" id="sidebar">
+        <div class="brand">
+            <div class="brand-icon"><i class="bi bi-buildings-fill"></i></div>
+            <div>
+                <h2>S.E.D.A.</h2>
+                <p>Gestão documental<br>inteligente</p>
+            </div>
+        </div>
+
+        <div class="menu-title">MENU PRINCIPAL</div>
+
+        <nav class="menu">
+            <a href="./dashboard.html"><i class="bi bi-grid-1x2-fill"></i> Dashboard</a>
+            <a href="./documentos.html"><i class="bi bi-folder2"></i> Documentos</a>
+            <a href="./conferencia.html"><i class="bi bi-clipboard-check"></i> Conferência</a>
+            <a href="./historico.html"><i class="bi bi-clock-history"></i> Histórico</a>
+            <a href="./relatorios.html" class="active"><i class="bi bi-file-earmark-bar-graph"></i> Relatórios</a>
+        </nav>
+
+        <div class="menu-title settings-title">CONFIGURAÇÕES</div>
+        <nav class="menu">
+            <a href="configuracoes.html"><i class="bi bi-gear"></i> Configurações</a>
+        </nav>
+
+        <div class="sidebar-bottom">
+            <div class="company">
+                <i class="bi bi-shield-check"></i>
+                <div>
+                    <strong>OTPRO CAPITAL</strong>
+                    <small>SOFIPE CORRETORA</small>
+                </div>
+            </div>
+
+            <div class="profile">
+                <div class="avatar">JS</div>
+                <div>
+                    <strong>João Silva</strong>
+                    <small>Administrador</small>
+                </div>
+                <button type="button" class="logout-button" id="logoutButton" title="Sair do sistema" aria-label="Sair do sistema">
+                    Sair
+                </button>
+            </div>
+        </div>
+    </aside>
+
+    <main class="main-content">
+
+        <header class="topbar">
+            <button class="menu-toggle" id="menuToggle" aria-label="Abrir menu">
+                <i class="bi bi-list"></i>
+            </button>
+
+            <div class="breadcrumb">
+                <span>Principal</span>
+                <i class="bi bi-chevron-right"></i>
+                <strong>Relatórios</strong>
+            </div>
+
+            <div class="topbar-right">
+                <div class="date-display">
+                    <i class="bi bi-calendar3"></i>
+                    <span id="currentDate"></span>
+                </div>
+
+                <button class="notification-button" id="notificationButton" aria-label="Notificações">
+                    <i class="bi bi-bell"></i>
+                    <span class="notification-indicator"></span>
+                </button>
+
+                <div class="topbar-user">
+                    <div class="topbar-avatar">JS</div>
+                    <span>Olá, João!</span>
+                    <i class="bi bi-chevron-down"></i>
+                </div>
+            </div>
+        </header>
+
+        <section class="page-content">
+
+            <div class="page-heading">
+                <div>
+                    <div class="eyebrow"><span></span> ANÁLISE DE DADOS</div>
+                    <h1>Relatórios</h1>
+                    <p>Acompanhe os indicadores e gere relatórios detalhados.</p>
+                </div>
+
+                <button class="btn-export" id="exportButton">
+                    <i class="bi bi-download"></i>
+                    Exportar Relatório
+                </button>
+            </div>
+
+            <!-- INDICADORES -->
+            <section class="stats-grid">
+                <article class="stat-card">
+                    <div class="stat-icon blue"><i class="bi bi-files"></i></div>
+                    <div>
+                        <span>Total de documentos</span>
+                        <strong id="totalCount">0</strong>
+                    </div>
+                </article>
+
+                <article class="stat-card">
+                    <div class="stat-icon green"><i class="bi bi-check-circle"></i></div>
+                    <div>
+                        <span>Aprovados</span>
+                        <strong id="approvedCount">0</strong>
+                    </div>
+                </article>
+
+                <article class="stat-card">
+                    <div class="stat-icon red"><i class="bi bi-x-circle"></i></div>
+                    <div>
+                        <span>Rejeitados</span>
+                        <strong id="rejectedCount">0</strong>
+                    </div>
+                </article>
+
+                <article class="stat-card">
+                    <div class="stat-icon yellow"><i class="bi bi-hourglass-split"></i></div>
+                    <div>
+                        <span>Pendentes</span>
+                        <strong id="pendingCount">0</strong>
+                    </div>
+                </article>
+            </section>
+
+            <!-- VISÃO GERAL -->
+            <section class="report-card overview-card">
+                <div class="section-heading">
+                    <div>
+                        <h2><i class="bi bi-bar-chart-fill"></i> Visão Geral</h2>
+                        <p>Resumo dos processamentos no período selecionado.</p>
+                    </div>
+
+                    <div class="period-buttons">
+                        <button class="period-btn" data-period="7">7 dias</button>
+                        <button class="period-btn active" data-period="30">30 dias</button>
+                        <button class="period-btn" data-period="90">90 dias</button>
+                        <button class="period-btn" data-period="all">Todo período</button>
+                    </div>
+                </div>
+
+                <div class="charts-grid">
+                    <div class="chart-area">
+                        <h3>Documentos por situação</h3>
+                        <div class="chart-container">
+                            <canvas id="documentsChart"></canvas>
+                        </div>
+                    </div>
+
+                    <div class="approval-area">
+                        <h3>Taxa de Aprovação</h3>
+
+                        <div class="approval-content">
+                            <div class="donut-container">
+                                <canvas id="approvalChart"></canvas>
+                                <div class="donut-center">
+                                    <strong id="approvalRate">0%</strong>
+                                </div>
+                            </div>
+
+                            <div class="chart-legend">
+                                <div>
+                                    <span class="legend-dot green-dot"></span>
+                                    <span>Aprovados</span>
+                                    <strong id="approvedLegend">0 (0%)</strong>
+                                </div>
+                                <div>
+                                    <span class="legend-dot red-dot"></span>
+                                    <span>Rejeitados</span>
+                                    <strong id="rejectedLegend">0 (0%)</strong>
+                                </div>
+                                <div>
+                                    <span class="legend-dot yellow-dot"></span>
+                                    <span>Pendentes</span>
+                                    <strong id="pendingLegend">0 (0%)</strong>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- RELATÓRIOS DETALHADOS -->
+            <section class="report-card detailed-card">
+                <div class="section-heading detailed-heading">
+                    <div>
+                        <h2><i class="bi bi-list-task"></i> Relatórios Detalhados</h2>
+                        <p>Consulte os dados por período, cliente ou status.</p>
+                    </div>
+                </div>
+
+                <div class="filters-grid">
+                    <div class="filter-field">
+                        <label for="periodFilter">Período</label>
+                        <select id="periodFilter">
+                            <option value="7">Últimos 7 dias</option>
+                            <option value="30" selected>Últimos 30 dias</option>
+                            <option value="90">Últimos 90 dias</option>
+                            <option value="all">Todo o período</option>
+                        </select>
+                    </div>
+
+                    <div class="filter-field">
+                        <label for="clientFilter">Cliente</label>
+                        <select id="clientFilter">
+                            <option value="all">Todos os clientes</option>
+                        </select>
+                    </div>
+
+                    <div class="filter-field">
+                        <label for="statusFilter">Status</label>
+                        <select id="statusFilter">
+                            <option value="all">Todos os status</option>
+                            <option value="aprovado">Aprovados</option>
+                            <option value="rejeitado">Rejeitados</option>
+                            <option value="pendente">Pendentes</option>
+                        </select>
+                    </div>
+
+                    <button class="btn-generate" id="generateButton">
+                        <i class="bi bi-search"></i>
+                        Gerar Relatório
+                    </button>
+                </div>
+
+                <div class="report-results">
+                    <div class="results-header">
+                        <div>
+                            <h3>Resultado da consulta</h3>
+                            <p id="resultDescription">Exibindo todos os documentos encontrados.</p>
+                        </div>
+                        <span class="result-count" id="resultCount">0 registros</span>
+                    </div>
+
+                    <div class="table-responsive">
+                        <table class="report-table">
+                            <thead>
+                                <tr>
+                                    <th>DOCUMENTO</th>
+                                    <th>CLIENTE</th>
+                                    <th>VALOR</th>
+                                    <th>STATUS</th>
+                                    <th>DATA</th>
+                                </tr>
+                            </thead>
+                            <tbody id="reportTableBody"></tbody>
+                        </table>
+                    </div>
+
+                    <div class="empty-state" id="emptyState" hidden>
+                        <i class="bi bi-inbox"></i>
+                        <strong>Nenhum documento encontrado</strong>
+                        <span>Altere os filtros e tente novamente.</span>
+                    </div>
+                </div>
+            </section>
+
+        </section>
+    </main>
+</div>
+
+<div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="js/relatorios.js"></script>
+<script src="./js/session.js"></script>
+</body>
+</html>
