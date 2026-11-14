@@ -69,6 +69,8 @@ O endpoint retorna `201` e um documento com `id`, `filename`, `status`,
 integradas à tela de conferência são `cliente`, `documento`, `periodo`,
 `valor_total`, `instituicao` e `observacoes`. `texto_bruto` contém o texto
 reconhecido para consulta e não é substituído ao salvar a revisão.
+Para incluir os campos resumidos na listagem sem o texto OCR completo, use
+`GET /documents?include_fields=true`.
 
 O OCR preenche apenas valores encontrados no arquivo. Campos não identificados
 ficam vazios para conferência manual; não são usados valores fictícios.

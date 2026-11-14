@@ -39,6 +39,8 @@ consultado. Valores não encontrados ficam vazios para preenchimento manual.
 ## Requisitos
 
 - Python instalado.
+- Versão atual do Google Chrome ou Mozilla Firefox. Abra o frontend pelo servidor
+  local indicado abaixo, não diretamente pelo arquivo HTML.
 - Acesso à internet para carregar Bootstrap, ícones e fontes externas usados
   pela interface.
 - **Opcional:** Tesseract OCR com o idioma português (`por`) para fazer OCR de

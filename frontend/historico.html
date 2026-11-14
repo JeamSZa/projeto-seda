@@ -246,9 +246,10 @@
 
                     <select id="statusFilter" class="form-select">
                         <option value="todos">Todos os status</option>
-                        <option value="Aprovado">Aprovados</option>
-                        <option value="Rejeitado">Rejeitados</option>
-                        <option value="Pendente">Pendentes</option>
+                        <option value="approved">Aprovados</option>
+                        <option value="rejected">Rejeitados</option>
+                        <option value="review">Pendentes</option>
+                        <option value="error">Erros</option>
                     </select>
 
                     <button class="clear-button" id="clearFilters">
@@ -300,7 +301,7 @@
 
                 <div class="table-footer">
                     <span id="footerCount">Exibindo 0 documentos</span>
-                    <span>Dados do ambiente de demonstração</span>
+                    <span>Dados armazenados na API do S.E.D.A.</span>
                 </div>
 
             </section>
@@ -401,6 +402,7 @@
 
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="./js/api.js"></script>
 <script src="js/historico.js"></script>
 <script src="./js/session.js"></script>
 </body></html>

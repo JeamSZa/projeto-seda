@@ -1,821 +1,326 @@
-
-// =============================================
-// S.E.D.A. - JAVASCRIPT DE DOCUMENTOS
-// =============================================
-
-document.addEventListener("DOMContentLoaded", function () {
-
-    // =========================================
-    // ELEMENTOS
-    // =========================================
-
-    const fileInput = document.getElementById("fileInput");
-    const uploadZone = document.getElementById("uploadZone");
-    const selectFileButton = document.getElementById("selectFileButton");
-    const topUploadButton = document.getElementById("topUploadButton");
-
-    const tableBody = document.getElementById("documentsTableBody");
-
-    const searchInput = document.getElementById("searchInput");
-    const statusFilter = document.getElementById("statusFilter");
-    const typeFilter = document.getElementById("typeFilter");
-
-    const uploadFeedback = document.getElementById("uploadFeedback");
-
-    const totalDocuments = document.getElementById("totalDocuments");
-    const pendingDocuments = document.getElementById("pendingDocuments");
-    const approvedDocuments = document.getElementById("approvedDocuments");
-    const errorDocuments = document.getElementById("errorDocuments");
-
-    const emptyState = document.getElementById("emptyState");
-    const tableCounter = document.getElementById("tableCounter");
-
-    const previewModalElement = document.getElementById("previewModal");
-
+document.addEventListener("DOMContentLoaded", () => {
+    const $ = id => document.getElementById(id);
+    const fileInput = $("fileInput");
+    const uploadZone = $("uploadZone");
+    const tableBody = $("documentsTableBody");
+    const searchInput = $("searchInput");
+    const statusFilter = $("statusFilter");
+    const typeFilter = $("typeFilter");
+    const uploadFeedback = $("uploadFeedback");
+    const emptyState = $("emptyState");
+    const previewModalElement = $("previewModal");
     const previewModal = new bootstrap.Modal(previewModalElement);
+    const pdfPreview = $("pdfPreview");
+    const imagePreview = $("imagePreview");
+    const toast = new bootstrap.Toast($("appToast"), { delay: 4000 });
+    let documents = [];
 
-    const pdfPreview = document.getElementById("pdfPreview");
-    const imagePreview = document.getElementById("imagePreview");
-    const previewFileName = document.getElementById("previewFileName");
-
-    const toastElement = document.getElementById("appToast");
-    const toastMessage = document.getElementById("toastMessage");
-
-    const toast = new bootstrap.Toast(toastElement, {
-        delay: 3000
+    $("currentDate").textContent = new Date().toLocaleDateString("pt-BR", {
+        day: "2-digit",
+        month: "long",
+        year: "numeric"
     });
-
-
-    // =========================================
-    // NOTIFICAÇÕES
-    // =========================================
 
     function notify(message) {
-
-        toastMessage.textContent = message;
-
+        $("toastMessage").textContent = message;
         toast.show();
-
     }
 
+    function showFeedback(message, type) {
+        uploadFeedback.textContent = message;
+        uploadFeedback.className = `upload-feedback show ${type}`;
+    }
 
-    // =========================================
-    // DATA
-    // =========================================
+    function getExtension(filename) {
+        return filename.split(".").pop().toUpperCase();
+    }
 
-    document.getElementById("currentDate").textContent =
-        new Date().toLocaleDateString("pt-BR", {
-            day: "2-digit",
-            month: "long",
-            year: "numeric"
+    function getFileIcon(type) {
+        return type === "PDF"
+            ? "bi-file-earmark-pdf"
+            : "bi-file-earmark-image";
+    }
+
+    function getStatusClass(status) {
+        return ({
+            approved: "processed",
+            review: "pending",
+            rejected: "error",
+            error: "error"
+        })[status] || "pending";
+    }
+
+    function updateMetrics() {
+        const counts = documents.reduce((result, doc) => {
+            result.total += 1;
+            result[doc.status] = (result[doc.status] || 0) + 1;
+            return result;
+        }, { total: 0 });
+
+        $("totalDocuments").textContent = counts.total;
+        $("pendingDocuments").textContent = counts.review || 0;
+        $("approvedDocuments").textContent = counts.approved || 0;
+        $("errorDocuments").textContent = (counts.error || 0) + (counts.rejected || 0);
+        $("menuDocumentCount").textContent = counts.total;
+    }
+
+    function createAction(icon, title, action, id, destructive = false) {
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = `file-action ${destructive ? "delete" : ""}`;
+        button.title = title;
+        button.setAttribute("aria-label", title);
+        button.dataset.action = action;
+        button.dataset.id = id;
+        const glyph = document.createElement("i");
+        glyph.className = `bi ${icon}`;
+        button.appendChild(glyph);
+        return button;
+    }
+
+    function renderDocuments() {
+        const search = searchInput.value.trim().toLocaleLowerCase("pt-BR");
+        const selectedStatus = statusFilter.value;
+        const selectedType = typeFilter.value;
+        const filtered = documents.filter(doc => (
+            doc.filename.toLocaleLowerCase("pt-BR").includes(search) &&
+            (selectedStatus === "todos" || doc.status === selectedStatus) &&
+            (selectedType === "todos" || getExtension(doc.filename) === selectedType)
+        ));
+
+        tableBody.replaceChildren();
+        filtered.forEach(doc => {
+            const row = document.createElement("tr");
+            const fileCell = document.createElement("td");
+            const fileContainer = document.createElement("div");
+            fileContainer.className = "file-cell";
+
+            const icon = document.createElement("div");
+            icon.className = `file-icon ${getExtension(doc.filename).toLowerCase()}`;
+            const glyph = document.createElement("i");
+            glyph.className = `bi ${getFileIcon(getExtension(doc.filename))}`;
+            icon.appendChild(glyph);
+
+            const details = document.createElement("div");
+            details.className = "file-details";
+            const name = document.createElement("strong");
+            name.textContent = doc.filename;
+            const description = document.createElement("span");
+            description.textContent = doc.ocr_error
+                ? "OCR indisponível — revisão manual"
+                : "Documento financeiro";
+            details.append(name, description);
+            fileContainer.append(icon, details);
+            fileCell.appendChild(fileContainer);
+            row.appendChild(fileCell);
+
+            for (const value of [
+                getExtension(doc.filename),
+                sedaFormatDate(doc.uploaded_at, true),
+                sedaFormatBytes(doc.size)
+            ]) {
+                const cell = document.createElement("td");
+                cell.textContent = value;
+                row.appendChild(cell);
+            }
+
+            const statusCell = document.createElement("td");
+            const status = document.createElement("span");
+            status.className = `file-status ${getStatusClass(doc.status)}`;
+            status.textContent = sedaStatusLabel(doc.status);
+            statusCell.appendChild(status);
+            row.appendChild(statusCell);
+
+            const actionsCell = document.createElement("td");
+            actionsCell.className = "text-end";
+            const actions = document.createElement("div");
+            actions.className = "file-actions";
+            actions.append(
+                createAction("bi-eye", "Visualizar documento", "preview", doc.id),
+                createAction("bi-pencil", "Conferir documento", "review", doc.id),
+                createAction("bi-file-earmark-spreadsheet", "Exportar Excel", "export", doc.id),
+                createAction("bi-trash", "Excluir documento", "delete", doc.id, true)
+            );
+            actionsCell.appendChild(actions);
+            row.appendChild(actionsCell);
+            tableBody.appendChild(row);
         });
 
+        emptyState.hidden = filtered.length !== 0;
+        $("tableCounter").textContent =
+            `Exibindo ${filtered.length} de ${documents.length} documentos`;
+        updateMetrics();
+    }
 
-    // =========================================
-    // MENU RESPONSIVO
-    // =========================================
+    async function loadDocuments() {
+        try {
+            documents = await sedaGetDocuments();
+            renderDocuments();
+        } catch (error) {
+            showFeedback(error.message, "error");
+            $("tableCounter").textContent = "Não foi possível carregar os documentos.";
+        }
+    }
 
-    const sidebar = document.getElementById("sidebar");
-    const menuToggle = document.getElementById("menuToggle");
+    async function handleFiles(files) {
+        const accepted = [];
+        const rejected = [];
+        for (const file of Array.from(files)) {
+            if (!["application/pdf", "image/jpeg", "image/png"].includes(file.type)) {
+                rejected.push(`${file.name}: formato não permitido.`);
+            } else if (!file.size || file.size > 10 * 1024 * 1024) {
+                rejected.push(`${file.name}: o arquivo precisa ter até 10 MB.`);
+            } else {
+                accepted.push(file);
+            }
+        }
 
-    menuToggle.addEventListener("click", function () {
+        let uploaded = 0;
+        for (const file of accepted) {
+            try {
+                await sedaUploadDocument(file);
+                uploaded += 1;
+            } catch (error) {
+                rejected.push(`${file.name}: ${error.message}`);
+            }
+        }
 
-        sidebar.classList.toggle("open");
+        fileInput.value = "";
+        await loadDocuments();
+        if (uploaded && !rejected.length) {
+            showFeedback(
+                `${uploaded} arquivo(s) enviado(s) e processado(s) pela API.`,
+                "success"
+            );
+            notify("Upload concluído.");
+        } else if (uploaded) {
+            showFeedback(
+                `${uploaded} arquivo(s) enviado(s). ${rejected.join(" ")}`,
+                "error"
+            );
+        } else {
+            showFeedback(
+                rejected.join(" ") || "Selecione ao menos um arquivo válido.",
+                "error"
+            );
+        }
+    }
 
+    function openPreview(doc) {
+        $("previewFileName").textContent = doc.filename;
+        pdfPreview.hidden = true;
+        imagePreview.hidden = true;
+        if (doc.content_type === "application/pdf") {
+            pdfPreview.src = sedaFileUrl(doc.id);
+            pdfPreview.hidden = false;
+        } else {
+            imagePreview.src = sedaFileUrl(doc.id);
+            imagePreview.hidden = false;
+        }
+        previewModal.show();
+    }
+
+    async function deleteDocument(doc) {
+        if (!confirm(`Deseja realmente excluir "${doc.filename}" e o arquivo original?`)) {
+            return;
+        }
+        try {
+            await sedaRequest(`/documents/${encodeURIComponent(doc.id)}`, {
+                method: "DELETE"
+            });
+            notify("Documento e arquivos associados excluídos.");
+            await loadDocuments();
+        } catch (error) {
+            notify(error.message);
+        }
+    }
+
+    tableBody.addEventListener("click", event => {
+        const button = event.target.closest("[data-action]");
+        if (!button) return;
+        const doc = documents.find(item => item.id === button.dataset.id);
+        if (!doc) return;
+
+        switch (button.dataset.action) {
+            case "preview":
+                openPreview(doc);
+                break;
+            case "review":
+                window.location.href = `./conferencia.html?id=${encodeURIComponent(doc.id)}`;
+                break;
+            case "export":
+                sedaDownload(sedaExportUrl(doc.id), `Dados_${doc.filename.replace(/\.[^.]+$/, "")}.xlsx`);
+                break;
+            case "delete":
+                deleteDocument(doc);
+                break;
+        }
     });
 
-    document.addEventListener("click", function (event) {
+    $("selectFileButton").addEventListener("click", () => fileInput.click());
+    $("topUploadButton").addEventListener("click", () => fileInput.click());
+    fileInput.addEventListener("change", () => {
+        if (fileInput.files.length) handleFiles(fileInput.files);
+    });
+    searchInput.addEventListener("input", renderDocuments);
+    statusFilter.addEventListener("change", renderDocuments);
+    typeFilter.addEventListener("change", renderDocuments);
+    $("notificationButton").addEventListener("click", () => {
+        notify("Os documentos exibidos estão sincronizados com a API.");
+    });
 
+    ["dragenter", "dragover"].forEach(name => uploadZone.addEventListener(name, event => {
+        event.preventDefault();
+        uploadZone.classList.add("drag-over");
+    }));
+    ["dragleave", "drop"].forEach(name => uploadZone.addEventListener(name, event => {
+        event.preventDefault();
+        uploadZone.classList.remove("drag-over");
+    }));
+    uploadZone.addEventListener("drop", event => {
+        if (event.dataTransfer.files.length) handleFiles(event.dataTransfer.files);
+    });
+
+    previewModalElement.addEventListener("hidden.bs.modal", () => {
+        pdfPreview.removeAttribute("src");
+        imagePreview.removeAttribute("src");
+        pdfPreview.hidden = true;
+        imagePreview.hidden = true;
+    });
+
+    $("exportButton").addEventListener("click", () => {
+        if (!documents.length) {
+            notify("Não existem documentos para exportar.");
+            return;
+        }
+        const rows = [
+            ["Documento", "Formato", "Data de envio", "Tamanho (bytes)", "Status"],
+            ...documents.map(doc => [
+                doc.filename,
+                getExtension(doc.filename),
+                sedaFormatDate(doc.uploaded_at, true),
+                doc.size,
+                sedaStatusLabel(doc.status)
+            ])
+        ];
+        sedaDownload(
+            URL.createObjectURL(new Blob([sedaCsv(rows)], { type: "text/csv;charset=utf-8" })),
+            "relatorio_documentos_seda.csv"
+        );
+    });
+
+    $("menuToggle").addEventListener("click", () => $("sidebar").classList.toggle("open"));
+    document.addEventListener("click", event => {
+        const sidebar = $("sidebar");
         if (
             window.innerWidth <= 900 &&
             sidebar.classList.contains("open") &&
             !sidebar.contains(event.target) &&
-            !menuToggle.contains(event.target)
+            !$("menuToggle").contains(event.target)
         ) {
-
             sidebar.classList.remove("open");
-
         }
-
     });
 
-
-    // =========================================
-    // NOTIFICAÇÕES DO CABEÇALHO
-    // =========================================
-
-    document.getElementById("notificationButton")
-        .addEventListener("click", function () {
-
-            notify("Você está na central de documentos do S.E.D.A.");
-
-        });
-
-
-    // =========================================
-    // BANCO DE DADOS DEMONSTRATIVO
-    // =========================================
-
-    let documents = [
-
-        {
-            id: 1,
-            name: "Extrato_Financeiro_2026.pdf",
-            type: "PDF",
-            date: new Date(2026, 10, 10, 14, 30),
-            size: 2.4,
-            status: "Processado",
-            file: null,
-            url: null
-        },
-
-        {
-            id: 2,
-            name: "Comprovante_2026.jpg",
-            type: "JPG",
-            date: new Date(2026, 10, 10, 13, 15),
-            size: 1.2,
-            status: "Pendente",
-            file: null,
-            url: null
-        },
-
-        {
-            id: 3,
-            name: "Contrato_2784.pdf",
-            type: "PDF",
-            date: new Date(2026, 10, 9, 10, 45),
-            size: 3.8,
-            status: "Processado",
-            file: null,
-            url: null
-        },
-
-        {
-            id: 4,
-            name: "Balanco_Financeiro.pdf",
-            type: "PDF",
-            date: new Date(2026, 10, 8, 9, 20),
-            size: 4.1,
-            status: "Erro",
-            file: null,
-            url: null
-        },
-
-        {
-            id: 5,
-            name: "Documento_Cliente.png",
-            type: "PNG",
-            date: new Date(2026, 10, 7, 15, 40),
-            size: 0.8,
-            status: "Pendente",
-            file: null,
-            url: null
-        }
-
-    ];
-
-    let nextId = 6;
-
-
-    // =========================================
-    // FORMATAR DATA E TAMANHO
-    // =========================================
-
-    function formatDate(date) {
-
-        return date.toLocaleDateString("pt-BR") +
-            " às " +
-            date.toLocaleTimeString("pt-BR", {
-                hour: "2-digit",
-                minute: "2-digit"
-            });
-
-    }
-
-
-    function formatSize(size) {
-
-        return size.toFixed(2).replace(".", ",") + " MB";
-
-    }
-
-
-    // =========================================
-    // ÍCONE DO DOCUMENTO
-    // =========================================
-
-    function getFileIcon(type) {
-
-        if (type === "PDF") {
-            return "bi-file-earmark-pdf";
-        }
-
-        if (type === "JPG" || type === "PNG") {
-            return "bi-file-earmark-image";
-        }
-
-        return "bi-file-earmark";
-
-    }
-
-
-    // =========================================
-    // STATUS DO DOCUMENTO
-    // =========================================
-
-    function getStatusHTML(status) {
-
-        if (status === "Processado") {
-
-            return `
-                <span class="file-status processed">
-                    <i class="bi bi-check-circle-fill"></i>
-                    Processado
-                </span>
-            `;
-
-        }
-
-        if (status === "Pendente") {
-
-            return `
-                <span class="file-status pending">
-                    <i class="bi bi-clock-fill"></i>
-                    Pendente
-                </span>
-            `;
-
-        }
-
-        return `
-            <span class="file-status error">
-                <i class="bi bi-exclamation-circle-fill"></i>
-                Erro
-            </span>
-        `;
-
-    }
-
-
-    // =========================================
-    // ATUALIZAR INDICADORES
-    // =========================================
-
-    function updateMetrics() {
-
-        const total = documents.length;
-
-        const pending = documents.filter(
-            doc => doc.status === "Pendente"
-        ).length;
-
-        const processed = documents.filter(
-            doc => doc.status === "Processado"
-        ).length;
-
-        const errors = documents.filter(
-            doc => doc.status === "Erro"
-        ).length;
-
-        totalDocuments.textContent = total;
-
-        pendingDocuments.textContent = pending;
-
-        approvedDocuments.textContent = processed;
-
-        errorDocuments.textContent = errors;
-
-        document.getElementById("menuDocumentCount").textContent = total;
-
-    }
-
-
-    // =========================================
-    // RENDERIZAR TABELA
-    // =========================================
-
-    function renderDocuments() {
-
-        const search = searchInput.value.toLowerCase().trim();
-
-        const selectedStatus = statusFilter.value;
-
-        const selectedType = typeFilter.value;
-
-        const filteredDocuments = documents.filter(function (doc) {
-
-            const matchesName = doc.name.toLowerCase().includes(search);
-
-            const matchesStatus =
-                selectedStatus === "todos" ||
-                doc.status === selectedStatus;
-
-            const matchesType =
-                selectedType === "todos" ||
-                doc.type === selectedType;
-
-            return matchesName && matchesStatus && matchesType;
-
-        });
-
-        tableBody.innerHTML = "";
-
-        filteredDocuments.forEach(function (doc) {
-
-            const row = document.createElement("tr");
-
-            row.innerHTML = `
-
-                <td>
-                    <div class="file-cell">
-
-                        <div class="file-icon ${doc.type.toLowerCase()}">
-                            <i class="bi ${getFileIcon(doc.type)}"></i>
-                        </div>
-
-                        <div class="file-details">
-                            <strong></strong>
-                            <span>Documento financeiro</span>
-                        </div>
-
-                    </div>
-                </td>
-
-                <td>${doc.type}</td>
-
-                <td>${formatDate(doc.date)}</td>
-
-                <td>${formatSize(doc.size)}</td>
-
-                <td>${getStatusHTML(doc.status)}</td>
-
-                <td>
-                    <div class="file-actions">
-
-                        <button
-                            class="file-action preview-action"
-                            title="Visualizar"
-                            aria-label="Visualizar documento"
-                            data-id="${doc.id}">
-                            <i class="bi bi-eye"></i>
-                        </button>
-
-                        <button
-                            class="file-action delete delete-action"
-                            title="Excluir"
-                            aria-label="Excluir documento"
-                            data-id="${doc.id}">
-                            <i class="bi bi-trash"></i>
-                        </button>
-
-                    </div>
-                </td>
-
-            `;
-
-            // Insere o nome como texto, sem interpretar HTML.
-            row.querySelector(".file-details strong").textContent = doc.name;
-
-            tableBody.appendChild(row);
-
-        });
-
-
-        emptyState.hidden = filteredDocuments.length !== 0;
-
-        tableCounter.textContent =
-            `Exibindo ${filteredDocuments.length} de ${documents.length} documentos`;
-
-        updateMetrics();
-
-    }
-
-
-    // =========================================
-    // PESQUISA E FILTROS
-    // =========================================
-
-    searchInput.addEventListener("input", renderDocuments);
-
-    statusFilter.addEventListener("change", renderDocuments);
-
-    typeFilter.addEventListener("change", renderDocuments);
-
-
-    // =========================================
-    // ABRIR SELETOR DE ARQUIVOS
-    // =========================================
-
-    function openFileSelector() {
-
-        fileInput.click();
-
-    }
-
-    selectFileButton.addEventListener("click", openFileSelector);
-
-    topUploadButton.addEventListener("click", openFileSelector);
-
-
-    // =========================================
-    // VALIDAR ARQUIVOS
-    // =========================================
-
-    const allowedTypes = [
-        "application/pdf",
-        "image/jpeg",
-        "image/png"
-    ];
-
-    const maxSize = 10 * 1024 * 1024;
-
-
-    function showFeedback(message, type) {
-
-        uploadFeedback.textContent = message;
-
-        uploadFeedback.className =
-            "upload-feedback show " + type;
-
-    }
-
-
-    // =========================================
-    // PROCESSAR SELEÇÃO DE ARQUIVOS
-    // =========================================
-
-    function handleFiles(files) {
-
-        let added = 0;
-
-        let rejected = 0;
-
-        Array.from(files).forEach(function (file) {
-
-            if (!allowedTypes.includes(file.type)) {
-
-                rejected++;
-
-                return;
-
-            }
-
-            if (file.size > maxSize) {
-
-                rejected++;
-
-                return;
-
-            }
-
-            if (file.size === 0) {
-
-                rejected++;
-
-                return;
-
-            }
-
-            const extension = file.name.split(".").pop().toUpperCase();
-
-            const fileUrl = URL.createObjectURL(file);
-
-            const newDocument = {
-
-                id: nextId++,
-
-                name: file.name,
-
-                type: extension,
-
-                date: new Date(),
-
-                size: file.size / (1024 * 1024),
-
-                status: "Pendente",
-
-                file: file,
-
-                url: fileUrl
-
-            };
-
-            documents.unshift(newDocument);
-
-            added++;
-
-        });
-
-
-        renderDocuments();
-
-        if (added > 0 && rejected === 0) {
-
-            showFeedback(
-                `${added} arquivo(s) adicionado(s) com sucesso!`,
-                "success"
-            );
-
-            notify("Arquivos adicionados à lista de documentos.");
-
-        } else if (added > 0) {
-
-            showFeedback(
-                `${added} arquivo(s) adicionado(s). ${rejected} arquivo(s) recusado(s).`,
-                "success"
-            );
-
-        } else {
-
-            showFeedback(
-                "Nenhum arquivo válido foi adicionado. Confira os formatos e o limite de 10 MB.",
-                "error"
-            );
-
-        }
-
-        fileInput.value = "";
-
-    }
-
-
-    fileInput.addEventListener("change", function () {
-
-        if (fileInput.files.length > 0) {
-
-            handleFiles(fileInput.files);
-
-        }
-
-    });
-
-
-    // =========================================
-    // ARRASTAR E SOLTAR
-    // =========================================
-
-    ["dragenter", "dragover"].forEach(function (eventName) {
-
-        uploadZone.addEventListener(eventName, function (event) {
-
-            event.preventDefault();
-
-            uploadZone.classList.add("drag-over");
-
-        });
-
-    });
-
-
-    ["dragleave", "drop"].forEach(function (eventName) {
-
-        uploadZone.addEventListener(eventName, function (event) {
-
-            event.preventDefault();
-
-            uploadZone.classList.remove("drag-over");
-
-        });
-
-    });
-
-
-    uploadZone.addEventListener("drop", function (event) {
-
-        const files = event.dataTransfer.files;
-
-        if (files.length > 0) {
-
-            handleFiles(files);
-
-        }
-
-    });
-
-
-    // =========================================
-    // VISUALIZAR DOCUMENTOS
-    // =========================================
-
-    function previewDocument(id) {
-
-        const doc = documents.find(item => item.id === id);
-
-        if (!doc) return;
-
-        if (!doc.url) {
-
-            notify("Este documento é demonstrativo e não possui arquivo original.");
-
-            return;
-
-        }
-
-        previewFileName.textContent = doc.name;
-
-        pdfPreview.hidden = true;
-
-        imagePreview.hidden = true;
-
-        if (doc.type === "PDF") {
-
-            pdfPreview.src = doc.url;
-
-            pdfPreview.hidden = false;
-
-        } else {
-
-            imagePreview.src = doc.url;
-
-            imagePreview.hidden = false;
-
-        }
-
-        previewModal.show();
-
-    }
-
-
-    // Limpar visualização ao fechar
-
-    previewModalElement.addEventListener("hidden.bs.modal", function () {
-
-        pdfPreview.removeAttribute("src");
-
-        imagePreview.removeAttribute("src");
-
-        imagePreview.hidden = true;
-
-        pdfPreview.hidden = true;
-
-    });
-
-
-    // =========================================
-    // EXCLUIR DOCUMENTOS
-    // =========================================
-
-    function deleteDocument(id) {
-
-        const doc = documents.find(item => item.id === id);
-
-        if (!doc) return;
-
-        const confirmation = confirm(
-            `Deseja realmente excluir o documento "${doc.name}"?`
-        );
-
-        if (!confirmation) return;
-
-        if (doc.url) {
-
-            URL.revokeObjectURL(doc.url);
-
-        }
-
-        documents = documents.filter(item => item.id !== id);
-
-        renderDocuments();
-
-        notify("Documento excluído com sucesso.");
-
-    }
-
-
-    // =========================================
-    // CLIQUES NAS AÇÕES DA TABELA
-    // =========================================
-
-    tableBody.addEventListener("click", function (event) {
-
-        const previewButton = event.target.closest(".preview-action");
-
-        const deleteButton = event.target.closest(".delete-action");
-
-        if (previewButton) {
-
-            previewDocument(Number(previewButton.dataset.id));
-
-        }
-
-        if (deleteButton) {
-
-            deleteDocument(Number(deleteButton.dataset.id));
-
-        }
-
-    });
-
-
-    // =========================================
-    // EXPORTAR LISTA PARA EXCEL / CSV
-    // =========================================
-
-    document.getElementById("exportButton")
-        .addEventListener("click", function () {
-
-            if (documents.length === 0) {
-
-                notify("Não existem documentos para exportar.");
-
-                return;
-
-            }
-
-            const header = [
-                "Nome",
-                "Formato",
-                "Data de envio",
-                "Tamanho",
-                "Status"
-            ];
-
-            const rows = documents.map(function (doc) {
-
-                return [
-                    doc.name,
-                    doc.type,
-                    formatDate(doc.date),
-                    formatSize(doc.size),
-                    doc.status
-                ];
-
-            });
-
-            const csvContent = [
-                header,
-                ...rows
-            ].map(function (row) {
-
-                return row.map(function (value) {
-
-                    return `"${String(value).replace(/"/g, '""')}"`;
-
-                }).join(";");
-
-            }).join("\r\n");
-
-            const blob = new Blob(
-                ["\uFEFF" + csvContent],
-                { type: "text/csv;charset=utf-8;" }
-            );
-
-            const url = URL.createObjectURL(blob);
-
-            const link = document.createElement("a");
-
-            link.href = url;
-
-            link.download = "relatorio_documentos_seda.csv";
-
-            link.click();
-
-            URL.revokeObjectURL(url);
-
-            notify("Relatório exportado com sucesso.");
-
-        });
-
-
-    // =========================================
-    // NAVEGAÇÃO
-    // =========================================
-
-    document.querySelectorAll(".sidebar-nav .nav-item")
-        .forEach(function (link) {
-
-            link.addEventListener("click", function (event) {
-
-                if (link.getAttribute("href") === "#") {
-
-                    event.preventDefault();
-
-                    const name = link.querySelector("span").textContent.trim();
-
-                    notify(
-                        `O módulo ${name} será desenvolvido nas próximas etapas.`
-                    );
-
-                }
-
-                if (window.innerWidth <= 900) {
-
-                    sidebar.classList.remove("open");
-
-                }
-
-            });
-
-        });
-
-
-    // =========================================
-    // INICIALIZAÇÃO
-    // =========================================
-
-    renderDocuments();
-
-    console.log("S.E.D.A. - Módulo Documentos iniciado!");
-
+    loadDocuments();
 });

@@ -1,198 +1,90 @@
-
 document.addEventListener("DOMContentLoaded", () => {
-
-    const STORAGE_KEY = "seda_conference_documents";
-
-    const totalCount = document.getElementById("totalCount");
-    const approvedCount = document.getElementById("approvedCount");
-    const rejectedCount = document.getElementById("rejectedCount");
-    const pendingCount = document.getElementById("pendingCount");
-
-    const periodFilter = document.getElementById("periodFilter");
-    const clientFilter = document.getElementById("clientFilter");
-    const statusFilter = document.getElementById("statusFilter");
-
-    const reportTableBody = document.getElementById("reportTableBody");
-    const emptyState = document.getElementById("emptyState");
-    const resultCount = document.getElementById("resultCount");
-    const resultDescription = document.getElementById("resultDescription");
-
+    const $ = id => document.getElementById(id);
+    const totalCount = $("totalCount");
+    const approvedCount = $("approvedCount");
+    const rejectedCount = $("rejectedCount");
+    const pendingCount = $("pendingCount");
+    const errorCount = $("errorCount");
+    const periodFilter = $("periodFilter");
+    const clientFilter = $("clientFilter");
+    const statusFilter = $("statusFilter");
+    const tableBody = $("reportTableBody");
+    const emptyState = $("emptyState");
+    const resultCount = $("resultCount");
+    const resultDescription = $("resultDescription");
     let documents = [];
     let filteredDocuments = [];
     let documentsChart = null;
     let approvalChart = null;
 
-    // DATA ATUAL
-    const currentDate = document.getElementById("currentDate");
-
-    currentDate.textContent = new Date().toLocaleDateString("pt-BR", {
+    $("currentDate").textContent = new Date().toLocaleDateString("pt-BR", {
         day: "numeric",
         month: "long",
         year: "numeric"
     });
 
-    // CARREGA OS DOCUMENTOS DA CONFERÊNCIA
-    function loadDocuments() {
-        try {
-            const savedDocuments = localStorage.getItem(STORAGE_KEY);
-            documents = savedDocuments ? JSON.parse(savedDocuments) : [];
-
-            if (!Array.isArray(documents)) {
-                documents = [];
-            }
-        } catch (error) {
-            console.error("Erro ao carregar documentos:", error);
-            documents = [];
-        }
+    function getFields(doc) {
+        return sedaFieldMap(doc.fields);
     }
 
-    // NORMALIZA O STATUS
-    function normalizeStatus(status) {
-        const value = String(status || "").trim().toLowerCase();
-
-        if (value.includes("aprov")) return "aprovado";
-        if (value.includes("rejeit") || value.includes("recus")) return "rejeitado";
-
-        return "pendente";
+    function fieldValue(doc, key) {
+        return getFields(doc)[key]?.value || "";
     }
 
-    function getStatusLabel(status) {
-        const normalized = normalizeStatus(status);
-
-        if (normalized === "aprovado") return "Aprovado";
-        if (normalized === "rejeitado") return "Rejeitado";
-
-        return "Pendente";
+    function getDate(doc) {
+        const date = new Date(doc.uploaded_at);
+        return Number.isNaN(date.getTime()) ? null : date;
     }
 
-    // CONVERTE DATAS SALVAS
-    function getDocumentDate(document) {
-        const dateValue =
-            document.date ||
-            document.createdAt ||
-            document.processedAt ||
-            document.processingDate;
-
-        if (!dateValue) return null;
-
-        const parsedDate = new Date(dateValue);
-
-        if (Number.isNaN(parsedDate.getTime())) return null;
-
-        return parsedDate;
-    }
-
-    function formatDate(document) {
-        const date = getDocumentDate(document);
-
-        if (!date) return "Não registrada";
-
-        return date.toLocaleDateString("pt-BR");
-    }
-
-    // FORMATA VALORES
-    function formatCurrency(value) {
-        if (value === null || value === undefined || value === "") {
-            return "Não informado";
-        }
-
-        if (typeof value === "number") {
-            return value.toLocaleString("pt-BR", {
-                style: "currency",
-                currency: "BRL"
-            });
-        }
-
-        const cleaned = String(value).trim();
-
-        if (!cleaned) return "Não informado";
-
-        // Se já estiver formatado, preserva o valor.
-        if (cleaned.includes("R$")) return cleaned;
-
-        const numberValue = Number(
-            cleaned.replace(/\./g, "").replace(",", ".")
-        );
-
-        if (Number.isNaN(numberValue)) return cleaned;
-
-        return numberValue.toLocaleString("pt-BR", {
-            style: "currency",
-            currency: "BRL"
+    function filterByPeriod(list) {
+        if (periodFilter.value === "all") return [...list];
+        const days = Number(periodFilter.value);
+        const end = new Date();
+        end.setHours(23, 59, 59, 999);
+        const start = new Date();
+        start.setDate(start.getDate() - days);
+        start.setHours(0, 0, 0, 0);
+        return list.filter(doc => {
+            const date = getDate(doc);
+            return date && date >= start && date <= end;
         });
     }
 
-    // FILTRO POR PERÍODO
-    function filterByPeriod(list, period) {
-        if (period === "all") return [...list];
-
-        const days = Number(period);
-
-        if (!days) return [...list];
-
-        const today = new Date();
-        today.setHours(23, 59, 59, 999);
-
-        const startDate = new Date();
-        startDate.setDate(today.getDate() - days);
-        startDate.setHours(0, 0, 0, 0);
-
-        return list.filter(document => {
-            const date = getDocumentDate(document);
-
-            // Documentos antigos sem data continuam aparecendo.
-            if (!date) return true;
-
-            return date >= startDate && date <= today;
-        });
+    function countStatuses(list) {
+        return list.reduce((counts, doc) => {
+            counts.total += 1;
+            counts[doc.status] = (counts[doc.status] || 0) + 1;
+            return counts;
+        }, { total: 0, approved: 0, rejected: 0, review: 0, error: 0 });
     }
 
-    // CONTADORES
-    function getCounts(list) {
-        return {
-            total: list.length,
-            approved: list.filter(doc => normalizeStatus(doc.status) === "aprovado").length,
-            rejected: list.filter(doc => normalizeStatus(doc.status) === "rejeitado").length,
-            pending: list.filter(doc => normalizeStatus(doc.status) === "pendente").length
-        };
-    }
-
-    function updateIndicators(list) {
-        const counts = getCounts(list);
-
+    function updateIndicators(counts) {
         totalCount.textContent = counts.total;
         approvedCount.textContent = counts.approved;
         rejectedCount.textContent = counts.rejected;
-        pendingCount.textContent = counts.pending;
-
-        return counts;
+        pendingCount.textContent = counts.review;
+        errorCount.textContent = counts.error;
     }
 
-    // GRÁFICO DE BARRAS
-    function updateDocumentsChart(counts) {
-        const canvas = document.getElementById("documentsChart");
-
-        if (documentsChart) {
-            documentsChart.destroy();
+    function updateCharts(counts) {
+        if (!window.Chart) {
+            sedaShowPageMessage("Os dados foram carregados, mas os gráficos não estão disponíveis porque o Chart.js não foi carregado.");
+            return;
         }
-
-        documentsChart = new Chart(canvas, {
+        const statusValues = [
+            counts.approved,
+            counts.review,
+            counts.rejected,
+            counts.error
+        ];
+        if (documentsChart) documentsChart.destroy();
+        documentsChart = new Chart($("documentsChart"), {
             type: "bar",
             data: {
-                labels: ["Total", "Aprovados", "Rejeitados", "Pendentes"],
+                labels: ["Aprovados", "Pendentes", "Rejeitados", "Erros"],
                 datasets: [{
-                    data: [
-                        counts.total,
-                        counts.approved,
-                        counts.rejected,
-                        counts.pending
-                    ],
-                    backgroundColor: [
-                        "#2875ae",
-                        "#1db47a",
-                        "#fa806e",
-                        "#f3c52f"
-                    ],
+                    data: statusValues,
+                    backgroundColor: ["#1db47a", "#f3c52f", "#fa806e", "#8c4141"],
                     borderRadius: 5,
                     maxBarThickness: 65
                 }]
@@ -200,72 +92,34 @@ document.addEventListener("DOMContentLoaded", () => {
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
-                plugins: {
-                    legend: { display: false }
-                },
+                plugins: { legend: { display: false } },
                 scales: {
-                    y: {
-                        beginAtZero: true,
-                        ticks: {
-                            precision: 0,
-                            stepSize: 1
-                        },
-                        grid: {
-                            color: "#edf1f4"
-                        }
-                    },
-                    x: {
-                        grid: {
-                            display: false
-                        }
-                    }
+                    y: { beginAtZero: true, ticks: { precision: 0, stepSize: 1 } },
+                    x: { grid: { display: false } }
                 }
             }
         });
-    }
 
-    // GRÁFICO DE APROVAÇÃO
-    function updateApprovalChart(counts) {
-        const canvas = document.getElementById("approvalChart");
-
-        if (approvalChart) {
-            approvalChart.destroy();
-        }
-
-        const total = counts.total;
-        const approvalRate = total
-            ? Math.round((counts.approved / total) * 100)
+        if (approvalChart) approvalChart.destroy();
+        const completed = counts.approved + counts.rejected + counts.error;
+        const approvalRate = completed
+            ? Math.round((counts.approved / completed) * 100)
             : 0;
-
-        const rejectedRate = total
-            ? Math.round((counts.rejected / total) * 100)
-            : 0;
-
-        const pendingRate = total
-            ? Math.round((counts.pending / total) * 100)
-            : 0;
-
-        document.getElementById("approvalRate").textContent = approvalRate + "%";
-
-        document.getElementById("approvedLegend").textContent =
-            `${counts.approved} (${approvalRate}%)`;
-
-        document.getElementById("rejectedLegend").textContent =
-            `${counts.rejected} (${rejectedRate}%)`;
-
-        document.getElementById("pendingLegend").textContent =
-            `${counts.pending} (${pendingRate}%)`;
-
-        approvalChart = new Chart(canvas, {
+        $("approvalRate").textContent = `${approvalRate}%`;
+        $("approvedLegend").textContent = `${counts.approved}`;
+        $("rejectedLegend").textContent = `${counts.rejected}`;
+        $("pendingLegend").textContent = `${counts.review}`;
+        $("errorLegend").textContent = `${counts.error}`;
+        approvalChart = new Chart($("approvalChart"), {
             type: "doughnut",
             data: {
-                labels: ["Aprovados", "Rejeitados", "Pendentes"],
+                labels: ["Aprovados", "Rejeitados", "Pendentes", "Erros"],
                 datasets: [{
-                    data: total
-                        ? [counts.approved, counts.rejected, counts.pending]
+                    data: counts.total
+                        ? statusValues
                         : [1],
-                    backgroundColor: total
-                        ? ["#1db47a", "#fa806e", "#f3c52f"]
+                    backgroundColor: counts.total
+                        ? ["#1db47a", "#fa806e", "#f3c52f", "#8c4141"]
                         : ["#e9eef1"],
                     borderWidth: 0,
                     hoverOffset: 5
@@ -277,193 +131,137 @@ document.addEventListener("DOMContentLoaded", () => {
                 cutout: "72%",
                 plugins: {
                     legend: { display: false },
-                    tooltip: {
-                        enabled: total > 0
-                    }
+                    tooltip: { enabled: counts.total > 0 }
                 }
             }
         });
     }
 
-    // ATUALIZA OS GRÁFICOS E INDICADORES
-    function updateDashboard() {
-        const periodDocuments = filterByPeriod(documents, periodFilter.value);
-        const counts = updateIndicators(periodDocuments);
-
-        updateDocumentsChart(counts);
-        updateApprovalChart(counts);
-
-        applyDetailedFilters();
-    }
-
-    // PREENCHE A LISTA DE CLIENTES
     function populateClients() {
+        const selected = clientFilter.value;
         const clients = [...new Set(
-            documents
-                .map(doc => String(doc.client || "").trim())
-                .filter(client => client)
-        )];
-
-        clientFilter.innerHTML = '<option value="all">Todos os clientes</option>';
-
-        clients.sort((a, b) => a.localeCompare(b, "pt-BR"));
-
+            documents.map(doc => fieldValue(doc, "cliente").trim()).filter(Boolean)
+        )].sort((a, b) => a.localeCompare(b, "pt-BR"));
+        clientFilter.replaceChildren(new Option("Todos os clientes", "all"));
         clients.forEach(client => {
-            const option = document.createElement("option");
-            option.value = client;
-            option.textContent = client;
+            const option = new Option(client, client);
             clientFilter.appendChild(option);
         });
+        if (clients.includes(selected)) clientFilter.value = selected;
     }
 
-    // APLICA OS FILTROS DA TABELA
-    function applyDetailedFilters() {
-        let result = filterByPeriod(documents, periodFilter.value);
-
+    function applyFilters() {
+        let result = filterByPeriod(documents);
         if (clientFilter.value !== "all") {
-            result = result.filter(doc => doc.client === clientFilter.value);
+            result = result.filter(doc => fieldValue(doc, "cliente") === clientFilter.value);
         }
-
         if (statusFilter.value !== "all") {
-            result = result.filter(doc =>
-                normalizeStatus(doc.status) === statusFilter.value
-            );
+            result = result.filter(doc => doc.status === statusFilter.value);
         }
-
         filteredDocuments = result;
-
-        renderTable(filteredDocuments);
-
+        renderTable();
         resultCount.textContent =
-            `${filteredDocuments.length} ${filteredDocuments.length === 1 ? "registro" : "registros"}`;
-
+            `${result.length} ${result.length === 1 ? "registro" : "registros"}`;
         resultDescription.textContent =
             `Consulta realizada em ${new Date().toLocaleDateString("pt-BR")}.`;
     }
 
-    // MOSTRA OS DOCUMENTOS NA TABELA
-    function renderTable(list) {
-        reportTableBody.innerHTML = "";
-
-        if (list.length === 0) {
-            emptyState.hidden = false;
-            return;
-        }
-
-        emptyState.hidden = true;
-
-        list.forEach(document => {
-            const status = normalizeStatus(document.status);
+    function renderTable() {
+        tableBody.replaceChildren();
+        emptyState.hidden = filteredDocuments.length > 0;
+        filteredDocuments.forEach(doc => {
             const row = document.createElement("tr");
-
             const values = [
-                document.name || "Documento sem nome",
-                document.client || "Não informado",
-                formatCurrency(document.value),
-                getStatusLabel(status),
-                formatDate(document)
+                doc.filename,
+                fieldValue(doc, "cliente") || "Não informado",
+                sedaFormatCurrency(fieldValue(doc, "valor_total")),
+                sedaStatusLabel(doc.status),
+                sedaFormatDate(doc.uploaded_at, true)
             ];
-
             values.forEach((value, index) => {
                 const cell = document.createElement("td");
-
-                if (index === 0) {
-                    cell.className = "document-name";
-                }
-
+                if (index === 0) cell.className = "document-name";
                 if (index === 3) {
                     const badge = document.createElement("span");
-                    badge.className = `status-badge status-${status}`;
+                    const statusClass = ({
+                        approved: "status-aprovado",
+                        rejected: "status-rejeitado",
+                        review: "status-pendente",
+                        error: "status-rejeitado"
+                    })[doc.status] || "status-pendente";
+                    badge.className = `status-badge ${statusClass}`;
                     badge.textContent = value;
                     cell.appendChild(badge);
                 } else {
                     cell.textContent = value;
                 }
-
                 row.appendChild(cell);
             });
-
-            reportTableBody.appendChild(row);
+            tableBody.appendChild(row);
         });
     }
 
-    // EXPORTAÇÃO CSV PARA EXCEL
-    function exportReport() {
-        if (filteredDocuments.length === 0) {
-            alert("Não existem documentos para exportar com os filtros selecionados.");
-            return;
-        }
-
-        const headers = [
-            "Documento",
-            "Cliente",
-            "Número",
-            "Período",
-            "Banco",
-            "Valor",
-            "Status",
-            "Data",
-            "Observações"
-        ];
-
-        const rows = filteredDocuments.map(document => [
-            document.name || "",
-            document.client || "",
-            document.number || "",
-            document.period || "",
-            document.bank || "",
-            document.value || "",
-            getStatusLabel(document.status),
-            formatDate(document),
-            document.observations || ""
-        ]);
-
-        function escapeCSV(value) {
-            return `"${String(value ?? "").replace(/"/g, '""')}"`;
-        }
-
-        const csvContent = [
-            headers.map(escapeCSV).join(";"),
-            ...rows.map(row => row.map(escapeCSV).join(";"))
-        ].join("\r\n");
-
-        const blob = new Blob(
-            ["\uFEFF" + csvContent],
-            { type: "text/csv;charset=utf-8;" }
-        );
-
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement("a");
-
-        link.href = url;
-        link.download = "relatorio_seda.csv";
-
-        document.body.appendChild(link);
-        link.click();
-        link.remove();
-
-        URL.revokeObjectURL(url);
+    function updateDashboard() {
+        const periodDocuments = filterByPeriod(documents);
+        updateIndicators(countStatuses(periodDocuments));
+        updateCharts(countStatuses(periodDocuments));
+        applyFilters();
     }
 
-    // BOTÕES DE PERÍODO DO GRÁFICO
+    function exportReport() {
+        if (!filteredDocuments.length) {
+            sedaShowPageMessage("Não existem documentos para exportar com os filtros selecionados.");
+            return;
+        }
+        const rows = [
+            [
+                "Documento", "Cliente", "CPF/CNPJ", "Período",
+                "Instituição financeira", "Valor", "Status",
+                "Data de envio", "Observações", "Justificativa"
+            ],
+            ...filteredDocuments.map(doc => [
+                doc.filename,
+                fieldValue(doc, "cliente"),
+                fieldValue(doc, "documento"),
+                fieldValue(doc, "periodo"),
+                fieldValue(doc, "instituicao"),
+                fieldValue(doc, "valor_total"),
+                sedaStatusLabel(doc.status),
+                sedaFormatDate(doc.uploaded_at, true),
+                fieldValue(doc, "observacoes"),
+                fieldValue(doc, "justificativa_rejeicao")
+            ])
+        ];
+        sedaDownload(
+            URL.createObjectURL(new Blob([sedaCsv(rows)], { type: "text/csv;charset=utf-8" })),
+            "relatorio_seda.csv"
+        );
+    }
+
+    async function loadDocuments() {
+        try {
+            documents = await sedaGetDocuments(true);
+            sedaClearPageError();
+            populateClients();
+            updateDashboard();
+        } catch (error) {
+            documents = [];
+            filteredDocuments = [];
+            updateDashboard();
+            sedaShowPageError(error.message);
+        }
+    }
+
     document.querySelectorAll(".period-btn").forEach(button => {
         button.addEventListener("click", () => {
-            document.querySelectorAll(".period-btn").forEach(btn => {
-                btn.classList.remove("active");
+            document.querySelectorAll(".period-btn").forEach(item => {
+                item.classList.toggle("active", item === button);
             });
-
-            button.classList.add("active");
             periodFilter.value = button.dataset.period;
-
             updateDashboard();
         });
     });
-
-    // FILTROS
-    document.getElementById("generateButton").addEventListener("click", () => {
-        updateDashboard();
-    });
-
+    $("generateButton").addEventListener("click", updateDashboard);
     periodFilter.addEventListener("change", () => {
         document.querySelectorAll(".period-btn").forEach(button => {
             button.classList.toggle(
@@ -471,33 +269,25 @@ document.addEventListener("DOMContentLoaded", () => {
                 button.dataset.period === periodFilter.value
             );
         });
-
         updateDashboard();
     });
+    clientFilter.addEventListener("change", applyFilters);
+    statusFilter.addEventListener("change", applyFilters);
+    $("exportButton").addEventListener("click", exportReport);
+    $("notificationButton").addEventListener("click", () => {
+        sedaShowPageMessage("Relatórios atualizados com os dados armazenados na API.");
+    });
 
-    clientFilter.addEventListener("change", applyDetailedFilters);
-    statusFilter.addEventListener("change", applyDetailedFilters);
-
-    // EXPORTAR
-    document.getElementById("exportButton").addEventListener("click", exportReport);
-
-    // MENU MOBILE
-    const sidebar = document.getElementById("sidebar");
-    const overlay = document.getElementById("sidebarOverlay");
-
-    document.getElementById("menuToggle").addEventListener("click", () => {
+    const sidebar = $("sidebar");
+    const overlay = $("sidebarOverlay");
+    $("menuToggle").addEventListener("click", () => {
         sidebar.classList.toggle("open");
         overlay.classList.toggle("show");
     });
-
     overlay.addEventListener("click", () => {
         sidebar.classList.remove("open");
         overlay.classList.remove("show");
     });
 
-    // INICIALIZAÇÃO
     loadDocuments();
-    populateClients();
-    updateDashboard();
-
 });

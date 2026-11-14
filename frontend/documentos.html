@@ -343,9 +343,10 @@
 
                     <select id="statusFilter" class="filter-select">
                         <option value="todos">Todos os status</option>
-                        <option value="Processado">Processado</option>
-                        <option value="Pendente">Pendente</option>
-                        <option value="Erro">Erro</option>
+                        <option value="approved">Aprovado</option>
+                        <option value="review">Pendente</option>
+                        <option value="rejected">Rejeitado</option>
+                        <option value="error">Erro</option>
                     </select>
 
                     <select id="typeFilter" class="filter-select">
@@ -402,7 +403,7 @@
 
                     <span>
                         <i class="bi bi-info-circle"></i>
-                        Dados demonstrativos e arquivos desta sessão.
+                        Documentos armazenados no banco de dados do S.E.D.A.
                     </span>
 
                 </div>
@@ -492,6 +493,7 @@
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 
 <!-- JAVASCRIPT -->
+<script src="./js/api.js"></script>
 <script src="./js/documentos.js"></script>
 <script src="./js/session.js"></script>
 

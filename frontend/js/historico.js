@@ -1,310 +1,197 @@
-
-document.addEventListener("DOMContentLoaded", function () {
-
+document.addEventListener("DOMContentLoaded", () => {
     const $ = id => document.getElementById(id);
-
     const searchInput = $("searchInput");
     const statusFilter = $("statusFilter");
     const tableBody = $("historyTableBody");
     const emptyState = $("emptyState");
-
     const detailsModal = new bootstrap.Modal($("detailsModal"));
+    let documents = [];
+    let filteredDocuments = [];
 
-    // Recuperar dados salvos na Conferência
-    function getDocuments() {
-
-        try {
-            return JSON.parse(
-                localStorage.getItem("seda_conference_documents") || "{}"
-            );
-        } catch (error) {
-            console.error("Erro ao recuperar histórico:", error);
-            return {};
-        }
-
-    }
-
-    let documents = getDocuments();
-
-    // Data atual
-    $("currentDate").textContent =
-        new Date().toLocaleDateString("pt-BR", {
-            day: "2-digit",
-            month: "long",
-            year: "numeric"
-        });
-
-    // Segurança para exibir textos na tabela
-    function escapeHTML(value) {
-        return String(value ?? "").replace(/[&<>"']/g, char => ({
-            "&": "&amp;",
-            "<": "&lt;",
-            ">": "&gt;",
-            '"': "&quot;",
-            "'": "&#039;"
-        })[char]);
-    }
-
-    // Formatação de valores
-    function formatCurrency(value) {
-
-        return Number(value || 0).toLocaleString("pt-BR", {
-            style: "currency",
-            currency: "BRL"
-        });
-
-    }
-
-    // Status
-    function getStatusClass(status) {
-
-        if (status === "Aprovado") return "status-approved";
-
-        if (status === "Rejeitado") return "status-rejected";
-
-        return "status-pending";
-
-    }
-
-    // Indicadores
-    function updateStats() {
-
-        const list = Object.values(documents);
-
-        $("totalCount").textContent = list.length;
-
-        $("approvedCount").textContent =
-            list.filter(doc => doc.status === "Aprovado").length;
-
-        $("rejectedCount").textContent =
-            list.filter(doc => doc.status === "Rejeitado").length;
-
-        $("pendingCount").textContent =
-            list.filter(doc => doc.status === "Pendente").length;
-
-    }
-
-    // Renderizar tabela
-    function renderTable() {
-
-        documents = getDocuments();
-
-        const search = searchInput.value.toLowerCase().trim();
-
-        const status = statusFilter.value;
-
-        const filtered = Object.entries(documents).filter(([id, doc]) => {
-
-            const matchesSearch =
-                String(doc.name || "").toLowerCase().includes(search) ||
-                String(doc.client || "").toLowerCase().includes(search);
-
-            const matchesStatus =
-                status === "todos" || doc.status === status;
-
-            return matchesSearch && matchesStatus;
-
-        });
-
-        tableBody.innerHTML = "";
-
-        emptyState.hidden = filtered.length > 0;
-
-        filtered.forEach(([id, doc]) => {
-
-            const statusLabel = doc.status || "Pendente";
-
-            const row = document.createElement("tr");
-
-            row.innerHTML = `
-                <td>
-                    <div class="document-cell">
-                        <div class="document-icon">
-                            <i class="bi bi-file-earmark-pdf"></i>
-                        </div>
-                        <div>
-                            <strong>${escapeHTML(doc.name || "Documento sem nome")}</strong>
-                            <small>Registro ${escapeHTML(id)}</small>
-                        </div>
-                    </div>
-                </td>
-
-                <td>${escapeHTML(doc.client || "Não informado")}</td>
-
-                <td>${formatCurrency(doc.value)}</td>
-
-                <td>
-                    <span class="status-badge ${getStatusClass(statusLabel)}">
-                        ${escapeHTML(statusLabel)}
-                    </span>
-                </td>
-
-                <td>Não registrada</td>
-
-                <td>
-                    <button class="details-button" data-id="${escapeHTML(id)}">
-                        <i class="bi bi-eye"></i> Detalhes
-                    </button>
-                </td>
-            `;
-
-            tableBody.appendChild(row);
-
-        });
-
-        $("recordsCount").textContent =
-            filtered.length + (filtered.length === 1 ? " registro" : " registros");
-
-        $("footerCount").textContent =
-            `Exibindo ${filtered.length} de ${Object.keys(documents).length} documentos`;
-
-        updateStats();
-
-    }
-
-    // Abrir detalhes
-    tableBody.addEventListener("click", function (event) {
-
-        const button = event.target.closest(".details-button");
-
-        if (!button) return;
-
-        const doc = documents[button.dataset.id];
-
-        if (!doc) return;
-
-        $("detailName").textContent = doc.name || "Não informado";
-        $("detailClient").textContent = doc.client || "Não informado";
-        $("detailNumber").textContent = doc.number || "Não informado";
-        $("detailPeriod").textContent = doc.period || "Não informado";
-        $("detailBank").textContent = doc.bank || "Não informado";
-        $("detailValue").textContent = formatCurrency(doc.value);
-        $("detailStatus").textContent = doc.status || "Pendente";
-
-        $("rejectionDetails").hidden = !doc.reason;
-        $("detailReason").textContent = doc.reason || "";
-
-        $("observationDetails").hidden = !doc.observations;
-        $("detailObservations").textContent = doc.observations || "";
-
-        detailsModal.show();
-
+    $("currentDate").textContent = new Date().toLocaleDateString("pt-BR", {
+        day: "2-digit",
+        month: "long",
+        year: "numeric"
     });
 
-    // Pesquisa
+    function getFields(doc) {
+        return sedaFieldMap(doc.fields);
+    }
+
+    function fieldValue(doc, key) {
+        return getFields(doc)[key]?.value || "";
+    }
+
+    function getStatusClass(status) {
+        return ({
+            approved: "status-approved",
+            rejected: "status-rejected",
+            error: "status-rejected",
+            review: "status-pending"
+        })[status] || "status-pending";
+    }
+
+    function updateStats() {
+        $("totalCount").textContent = documents.length;
+        $("approvedCount").textContent =
+            documents.filter(doc => doc.status === "approved").length;
+        $("rejectedCount").textContent =
+            documents.filter(doc => doc.status === "rejected").length;
+        $("pendingCount").textContent =
+            documents.filter(doc => doc.status === "review").length;
+    }
+
+    function renderTable() {
+        const search = searchInput.value.trim().toLocaleLowerCase("pt-BR");
+        const status = statusFilter.value;
+        filteredDocuments = documents.filter(doc => {
+            const client = fieldValue(doc, "cliente").toLocaleLowerCase("pt-BR");
+            return (
+                (doc.filename.toLocaleLowerCase("pt-BR").includes(search) ||
+                    client.includes(search)) &&
+                (status === "todos" || doc.status === status)
+            );
+        });
+
+        tableBody.replaceChildren();
+        filteredDocuments.forEach(doc => {
+            const row = document.createElement("tr");
+            const file = document.createElement("td");
+            const name = document.createElement("strong");
+            name.textContent = doc.filename;
+            const id = document.createElement("small");
+            id.textContent = `Registro ${doc.id}`;
+            file.append(name, document.createElement("br"), id);
+            row.appendChild(file);
+
+            for (const value of [
+                fieldValue(doc, "cliente") || "Não informado",
+                sedaFormatCurrency(fieldValue(doc, "valor_total"))
+            ]) {
+                const cell = document.createElement("td");
+                cell.textContent = value;
+                row.appendChild(cell);
+            }
+
+            const statusCell = document.createElement("td");
+            const badge = document.createElement("span");
+            badge.className = `status-badge ${getStatusClass(doc.status)}`;
+            badge.textContent = sedaStatusLabel(doc.status);
+            statusCell.appendChild(badge);
+            row.appendChild(statusCell);
+
+            const dateCell = document.createElement("td");
+            dateCell.textContent = sedaFormatDate(doc.uploaded_at, true);
+            row.appendChild(dateCell);
+
+            const actionCell = document.createElement("td");
+            const detailButton = document.createElement("button");
+            detailButton.type = "button";
+            detailButton.className = "details-button";
+            detailButton.dataset.id = doc.id;
+            detailButton.textContent = "Detalhes";
+            actionCell.appendChild(detailButton);
+            row.appendChild(actionCell);
+            tableBody.appendChild(row);
+        });
+
+        emptyState.hidden = filteredDocuments.length > 0;
+        $("recordsCount").textContent =
+            `${filteredDocuments.length} ${filteredDocuments.length === 1 ? "registro" : "registros"}`;
+        $("footerCount").textContent =
+            `Exibindo ${filteredDocuments.length} de ${documents.length} documentos`;
+        updateStats();
+    }
+
+    function showDetails(doc) {
+        $("detailName").textContent = doc.filename || "Não informado";
+        $("detailClient").textContent = fieldValue(doc, "cliente") || "Não informado";
+        $("detailNumber").textContent = fieldValue(doc, "documento") || "Não informado";
+        $("detailPeriod").textContent = fieldValue(doc, "periodo") || "Não informado";
+        $("detailBank").textContent = fieldValue(doc, "instituicao") || "Não informado";
+        $("detailValue").textContent = sedaFormatCurrency(fieldValue(doc, "valor_total"));
+        $("detailStatus").textContent = sedaStatusLabel(doc.status);
+
+        const reason = fieldValue(doc, "justificativa_rejeicao");
+        $("rejectionDetails").hidden = !reason;
+        $("detailReason").textContent = reason;
+        const observations = fieldValue(doc, "observacoes");
+        $("observationDetails").hidden = !observations;
+        $("detailObservations").textContent = observations;
+        detailsModal.show();
+    }
+
+    async function loadDocuments() {
+        try {
+            documents = await sedaGetDocuments(true);
+            sedaClearPageError();
+            renderTable();
+        } catch (error) {
+            documents = [];
+            renderTable();
+            sedaShowPageError(error.message);
+        }
+    }
+
+    tableBody.addEventListener("click", event => {
+        const button = event.target.closest(".details-button");
+        if (!button) return;
+        const doc = documents.find(item => item.id === button.dataset.id);
+        if (doc) showDetails(doc);
+    });
     searchInput.addEventListener("input", renderTable);
-
-    // Filtro
     statusFilter.addEventListener("change", renderTable);
-
-    // Limpar filtros
-    $("clearFilters").addEventListener("click", function () {
-
+    $("clearFilters").addEventListener("click", () => {
         searchInput.value = "";
         statusFilter.value = "todos";
-
         renderTable();
-
     });
 
-    // Exportar CSV compatível com Excel
-    $("exportButton").addEventListener("click", function () {
-
-        const list = Object.entries(getDocuments());
-
-        if (list.length === 0) {
-
-            alert("Não existem documentos para exportar.");
-
+    $("exportButton").addEventListener("click", () => {
+        if (!filteredDocuments.length) {
+            sedaShowPageError("Não existem documentos para exportar com os filtros selecionados.");
             return;
-
         }
-
-        const headers = [
-            "ID",
-            "Documento",
-            "Cliente",
-            "CPF/CNPJ",
-            "Período",
-            "Instituição financeira",
-            "Valor",
-            "Status",
-            "Justificativa",
-            "Observações"
+        const rows = [
+            [
+                "ID", "Documento", "Cliente", "CPF/CNPJ", "Período",
+                "Instituição financeira", "Valor", "Status",
+                "Justificativa", "Observações", "Data de envio"
+            ],
+            ...filteredDocuments.map(doc => [
+                doc.id,
+                doc.filename,
+                fieldValue(doc, "cliente"),
+                fieldValue(doc, "documento"),
+                fieldValue(doc, "periodo"),
+                fieldValue(doc, "instituicao"),
+                fieldValue(doc, "valor_total"),
+                sedaStatusLabel(doc.status),
+                fieldValue(doc, "justificativa_rejeicao"),
+                fieldValue(doc, "observacoes"),
+                sedaFormatDate(doc.uploaded_at, true)
+            ])
         ];
-
-        function csvValue(value) {
-            return '"' + String(value ?? "").replace(/"/g, '""') + '"';
-        }
-
-        const rows = list.map(([id, doc]) => [
-
-            id,
-            doc.name,
-            doc.client,
-            doc.number,
-            doc.period,
-            doc.bank,
-            Number(doc.value || 0).toFixed(2),
-            doc.status,
-            doc.reason,
-            doc.observations
-
-        ]);
-
-        const csvContent = [
-            headers,
-            ...rows
-        ].map(row => row.map(csvValue).join(";")).join("\r\n");
-
-        // BOM para compatibilidade com caracteres acentuados no Excel
-        const blob = new Blob(
-            ["\uFEFF" + csvContent],
-            { type: "text/csv;charset=utf-8;" }
+        sedaDownload(
+            URL.createObjectURL(new Blob([sedaCsv(rows)], { type: "text/csv;charset=utf-8" })),
+            "historico_seda.csv"
         );
-
-        const url = URL.createObjectURL(blob);
-
-        const link = document.createElement("a");
-
-        link.href = url;
-        link.download = "historico_SEDA.csv";
-
-        document.body.appendChild(link);
-
-        link.click();
-
-        link.remove();
-
-        URL.revokeObjectURL(url);
-
     });
 
-    // Menu responsivo
-    $("menuToggle").addEventListener("click", function () {
-
-        $("sidebar").classList.toggle("open");
-
-    });
-
-    document.addEventListener("click", function (event) {
-
+    $("menuToggle").addEventListener("click", () => $("sidebar").classList.toggle("open"));
+    document.addEventListener("click", event => {
         const sidebar = $("sidebar");
-
         if (
             window.innerWidth <= 700 &&
             sidebar.classList.contains("open") &&
             !sidebar.contains(event.target) &&
             !$("menuToggle").contains(event.target)
-        ) {
-            sidebar.classList.remove("open");
-        }
-
+        ) sidebar.classList.remove("open");
     });
 
-    // Inicialização
-    renderTable();
+    $("notificationButton").addEventListener("click", () => {
+        sedaShowPageMessage("O histórico exibe os documentos armazenados no servidor.");
+    });
 
-    console.log("S.E.D.A. - Histórico iniciado!");
-
+    loadDocuments();
 });

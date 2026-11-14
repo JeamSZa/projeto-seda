@@ -174,7 +174,7 @@ def validate_file(file_path: Path) -> None:
     try:
         with Image.open(file_path) as image:
             image.verify()
-    except (UnidentifiedImageError, OSError) as exc:
+    except (UnidentifiedImageError, OSError, SyntaxError) as exc:
         raise HTTPException(
             status_code=400,
             detail="O arquivo de imagem é inválido.",
@@ -239,7 +239,11 @@ def extract_fields(text: str) -> list[dict[str, str]]:
     ]
 
 
-def serialize_document(row: sqlite3.Row, include_fields: bool = False) -> dict:
+def serialize_document(
+    row: sqlite3.Row,
+    include_fields: bool = False,
+    include_raw_text: bool = True,
+) -> dict:
     file_path = stored_file_path(row["file_path"])
     size = row["file_size"]
     if not size and file_path is not None and file_path.is_file():
@@ -257,7 +261,10 @@ def serialize_document(row: sqlite3.Row, include_fields: bool = False) -> dict:
         "ocr_error": row["ocr_error"],
     }
     if include_fields:
-        document["fields"] = read_document_fields(row)
+        fields = read_document_fields(row)
+        document["fields"] = fields if include_raw_text else [
+            field for field in fields if field.get("key") != "texto_bruto"
+        ]
     return document
 
 
@@ -420,17 +427,24 @@ async def create_document(file: UploadFile = File(...)) -> dict:
 
 
 @app.get("/documents")
-def list_documents() -> list[dict]:
+def list_documents(include_fields: bool = False) -> list[dict]:
     with connect_db() as conn:
         rows = conn.execute(
             """
-            SELECT id, filename, status, uploaded_at, file_size, content_type,
-                   ocr_error, file_path
+            SELECT id, filename, status, uploaded_at, fields_json, file_size,
+                   content_type, ocr_error, file_path
             FROM documents
             ORDER BY uploaded_at DESC
             """
         ).fetchall()
-    return [serialize_document(row) for row in rows]
+    return [
+        serialize_document(
+            row,
+            include_fields=include_fields,
+            include_raw_text=False,
+        )
+        for row in rows
+    ]
 
 
 @app.get("/dashboard/summary")

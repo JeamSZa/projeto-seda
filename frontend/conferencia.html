@@ -62,7 +62,7 @@
             <a href="conferencia.html" class="nav-item active">
                 <i class="bi bi-clipboard-check"></i>
                 <span>Conferência</span>
-                <span class="nav-count" id="sidebarPending">3</span>
+                <span class="nav-count" id="sidebarPending">0</span>
             </a>
 
             <a href="historico.html" class="nav-item">
@@ -174,7 +174,7 @@
 
                 <div class="pending-indicator">
                     <i class="bi bi-hourglass-split"></i>
-                    <strong id="pendingCount">3 documentos pendentes</strong>
+                    <strong id="pendingCount">Carregando pendências...</strong>
                 </div>
 
             </div>
@@ -188,20 +188,14 @@
                     <label for="documentSelect">Documento em análise</label>
 
                     <select id="documentSelect" class="form-select">
-
-                        <option value="1">Extrato_Financeiro_2026.pdf</option>
-
-                        <option value="2">Comprovante_Cliente.pdf</option>
-
-                        <option value="3">Contrato_Financeiro.pdf</option>
-
+                        <option value="">Carregando documentos...</option>
                     </select>
 
                 </div>
 
                 <div class="document-status" id="documentStatus">
                     <span class="status-dot"></span>
-                    Aguardando revisão
+                    Carregando documento...
                 </div>
 
             </section>
@@ -249,8 +243,8 @@
                             <i class="bi bi-file-earmark-text"></i>
 
                             <div>
-                                <strong id="originalFileName">Extrato_Financeiro_2026.pdf</strong>
-                                <small id="fileMetadata">PDF • Arquivo demonstrativo</small>
+                                <strong id="originalFileName">Nenhum documento selecionado</strong>
+                                <small id="fileMetadata">Selecione um documento para visualizar</small>
                             </div>
                         </div>
 
@@ -298,11 +292,11 @@
 
                             <i class="bi bi-file-earmark-pdf pdf-placeholder-icon"></i>
 
-                            <h3>Extrato Financeiro</h3>
+                            <h3>Selecione um documento</h3>
 
-                            <p>Documento demonstrativo do S.E.D.A.</p>
+                            <p>O arquivo selecionado será exibido aqui.</p>
 
-                            <div class="sample-document" id="sampleDocument">
+                            <div class="sample-document" id="sampleDocument" hidden>
 
                                 <div class="sample-bank">
                                     <strong>BANCO DO BRASIL</strong>
@@ -346,7 +340,7 @@
 
                     <div class="viewer-footer">
                         <i class="bi bi-info-circle"></i>
-                        Os arquivos são exibidos localmente nesta demonstração.
+                        Os documentos são exibidos pelo visualizador do navegador.
                     </div>
 
                 </section>
@@ -371,7 +365,7 @@
 
                         <span class="ai-badge">
                             <i class="bi bi-stars"></i>
-                            IA DEMONSTRATIVA
+                            OCR LOCAL
                         </span>
 
                     </div>
@@ -384,10 +378,11 @@
                             <span>Campos identificados</span>
                         </div>
 
-                        <strong id="fieldCount">6 campos</strong>
+                        <strong id="fieldCount">0 campos preenchidos</strong>
 
                     </div>
 
+                    <div class="alert alert-warning mx-3 mt-3 mb-0" id="ocrFeedback" role="status" hidden></div>
 
                     <form id="conferenceForm">
 
@@ -399,7 +394,7 @@
                                 <label for="clientName">Nome do cliente</label>
 
                                 <span class="confidence high">
-                                    98% confiança
+                                    Revisar
                                 </span>
 
                             </div>
@@ -427,7 +422,7 @@
                                 <label for="documentNumber">CPF / CNPJ</label>
 
                                 <span class="confidence high">
-                                    99% confiança
+                                    Revisar
                                 </span>
 
                             </div>
@@ -455,7 +450,7 @@
                                 <label for="referencePeriod">Período de referência</label>
 
                                 <span class="confidence high">
-                                    95% confiança
+                                    Revisar
                                 </span>
 
                             </div>
@@ -483,7 +478,7 @@
                                 <label for="documentValue">Valor financeiro (R$)</label>
 
                                 <span class="confidence medium">
-                                    72% confiança
+                                    Revisar
                                 </span>
 
                             </div>
@@ -518,7 +513,7 @@
                                 <label for="bankName">Instituição financeira</label>
 
                                 <span class="confidence high">
-                                    97% confiança
+                                    Revisar
                                 </span>
 
                             </div>
@@ -554,6 +549,18 @@
 
                         </div>
 
+                        <div class="extracted-field">
+                            <div class="field-heading">
+                                <label for="rawText">Texto reconhecido pelo OCR</label>
+                            </div>
+                            <textarea
+                                id="rawText"
+                                class="form-control"
+                                rows="5"
+                                readonly
+                                placeholder="O texto reconhecido aparecerá aqui."
+                            ></textarea>
+                        </div>
 
                         <!-- AÇÕES -->
                         <div class="action-buttons">
@@ -711,6 +718,7 @@
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 
 <!-- JAVASCRIPT -->
+<script src="./js/api.js"></script>
 <script src="js/conferencia.js"></script>
 <script src="./js/session.js"></script>
 </body></html>

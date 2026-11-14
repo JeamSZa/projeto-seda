@@ -390,7 +390,7 @@ button {
 
 .stats-grid {
     display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
+    grid-template-columns: repeat(5, minmax(0, 1fr));
     gap: 15px;
     margin-bottom: 19px;
 }
@@ -763,6 +763,11 @@ button {
 .status-pendente {
     background: #fff5df;
     color: #b17b00;
+}
+
+.status-error {
+    background: #fff0ef;
+    color: #dc4c48;
 }
 
 .empty-state {

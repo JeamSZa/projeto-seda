@@ -732,7 +732,8 @@ button {
 }
 
 .sample-document {
-    width: min(100%, 525px);
+    width: 100%;
+    max-width: 525px;
     min-height: 440px;
     background: white;
     padding: 35px 32px;
@@ -1158,6 +1159,10 @@ button {
 ========================================= */
 
 @media (max-width: 700px) {
+
+    .main-content {
+        margin-left: 0;
+    }
 
     .sidebar {
         position: fixed;

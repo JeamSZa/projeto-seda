@@ -143,6 +143,13 @@
                         <strong id="pendingCount">0</strong>
                     </div>
                 </article>
+                <article class="stat-card">
+                    <div class="stat-icon red"><i class="bi bi-exclamation-circle"></i></div>
+                    <div>
+                        <span>Erros de processamento</span>
+                        <strong id="errorCount">0</strong>
+                    </div>
+                </article>
             </section>
 
             <!-- VISÃO GERAL -->
@@ -194,7 +201,12 @@
                                 <div>
                                     <span class="legend-dot yellow-dot"></span>
                                     <span>Pendentes</span>
-                                    <strong id="pendingLegend">0 (0%)</strong>
+                                    <strong id="pendingLegend">0</strong>
+                                </div>
+                                <div>
+                                    <span class="legend-dot red-dot"></span>
+                                    <span>Erros</span>
+                                    <strong id="errorLegend">0</strong>
                                 </div>
                             </div>
                         </div>
@@ -233,9 +245,10 @@
                         <label for="statusFilter">Status</label>
                         <select id="statusFilter">
                             <option value="all">Todos os status</option>
-                            <option value="aprovado">Aprovados</option>
-                            <option value="rejeitado">Rejeitados</option>
-                            <option value="pendente">Pendentes</option>
+                            <option value="approved">Aprovados</option>
+                            <option value="rejected">Rejeitados</option>
+                            <option value="review">Pendentes</option>
+                            <option value="error">Erros</option>
                         </select>
                     </div>
 
@@ -284,6 +297,7 @@
 <div class="sidebar-overlay" id="sidebarOverlay"></div>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="./js/api.js"></script>
 <script src="js/relatorios.js"></script>
 <script src="./js/session.js"></script>
 </body>
